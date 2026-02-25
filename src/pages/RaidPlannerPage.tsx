@@ -232,20 +232,20 @@ export const RaidPlannerPage: React.FC = () => {
 
                 const sourceIndex = newSlots.findIndex(s => s.position === sourcePos);
                 const sourceSlot = newSlots[sourceIndex];
-                const targetSlot = newSlots[targetIndex];
+                const tSlot = newSlots[targetIndex];
 
                 // Swap Logic
                 newSlots[sourceIndex] = {
                     ...sourceSlot,
-                    characterId: targetSlot.characterId,
-                    characterName: targetSlot.characterName,
-                    characterClass: targetSlot.characterClass,
-                    spec: targetSlot.spec,
-                    role: targetSlot.role
+                    characterId: tSlot.characterId,
+                    characterName: tSlot.characterName,
+                    characterClass: tSlot.characterClass,
+                    spec: tSlot.spec,
+                    role: tSlot.role
                 };
 
                 newSlots[targetIndex] = {
-                    ...targetSlot,
+                    ...tSlot,
                     characterId: sourceSlot.characterId,
                     characterName: sourceSlot.characterName,
                     characterClass: sourceSlot.characterClass,
