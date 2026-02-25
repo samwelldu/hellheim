@@ -21,7 +21,7 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
     }, []);
 
     return (
-        <div className="relative h-[100vh] w-full overflow-hidden flex items-center justify-center bg-[#05020a]">
+        <div className="relative h-[80vh] w-full overflow-hidden flex items-center justify-center bg-[#05020a]">
             {/* Capa de la Imagen Principal - El alma visual de Quel'Thalas */}
             <div
                 className="absolute inset-0 z-0 overflow-hidden"
@@ -59,20 +59,12 @@ export const ParallaxHero: React.FC<ParallaxHeroProps> = ({
 
             {/* Contenido Central - Donde la épica de Tan cobra vida */}
             <div className="relative z-30 text-center px-4 max-w-5xl animate-scale-in">
-                <h1 className="text-7xl md:text-9xl font-black text-white tracking-tighter mb-4 drop-shadow-[0_0_50px_rgba(168,85,247,0.8)]">
+                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-4 drop-shadow-[0_0_50px_rgba(168,85,247,0.8)]">
                     {TanTitulo}
                 </h1>
-                <p className="text-xl md:text-2xl text-void-light font-black uppercase tracking-[0.4em] opacity-90 mb-10 max-w-2xl mx-auto drop-shadow-lg">
+                <p className="text-lg md:text-xl text-void-light font-black uppercase tracking-[0.4em] opacity-90 mb-10 max-w-2xl mx-auto drop-shadow-lg">
                     {TanSubtitulo}
                 </p>
-                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center scale-110">
-                    <button className="w-full sm:w-auto bg-void hover:bg-void-light text-white font-black px-12 py-5 rounded-full transition-all hover:scale-110 shadow-[0_0_30_rgba(168,85,247,0.5)] uppercase tracking-widest text-sm">
-                        Únete a la Sombra
-                    </button>
-                    <button className="w-full sm:w-auto bg-white/10 backdrop-blur-md border-2 border-white/20 hover:border-white/50 text-white font-black px-12 py-5 rounded-full transition-all hover:bg-white/20 uppercase tracking-widest text-sm">
-                        Ver Cinematic
-                    </button>
-                </div>
             </div>
 
             {/* Transición al Abismo - Gradiente inferior para suavizar el paso */}

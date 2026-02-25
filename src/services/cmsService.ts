@@ -37,10 +37,10 @@ const DEFAULT_CONTENT: LandingContent = {
         videoId: "Z0_cI-DqjE8"
     },
     vision: {
-        tag: "Nuestra Visión",
-        title: "Forjados en la Oscuridad,",
-        highlight: "Unidos por la Victoria.",
-        description: "No somos solo una hermandad; somos el baluarte que resiste ante el Vacío. En la próxima expansión Midnight, regresamos a nuestras raíces en Quel'Thalas para reclamar lo que es nuestro."
+        tag: "Nuestra Historia",
+        title: "Forjados en Classic,",
+        highlight: "Renacidos en Midnight.",
+        description: "Hellheim nació en los ecos de TBC Classic como una promesa de lealtad. Tras enfrentar tormentas en Pandaria y problemas técnicos que pusieron a prueba nuestra voluntad, decidimos evolucionar y migrar hacia Retail. Durante The War Within, forjamos un roster que tanteó el terreno mítico con valentía. Hoy, en Midnight, regresamos con toda nuestra fuerza para conquistar cada desafío que Azeroth nos ponga por delante. El legado continúa."
     },
     recruitment: [
         { role: 'Tanks', status: 'Cerrado', icon: 'Shield', color: 'text-red-500' },

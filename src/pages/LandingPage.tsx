@@ -120,24 +120,46 @@ export const LandingPage: React.FC = () => {
                         </p>
                         <div className="grid grid-cols-2 gap-8 pt-8">
                             <div className="space-y-2">
-                                <div className="text-4xl font-black text-white">CE</div>
-                                <div className="text-xs uppercase tracking-widest text-midnight-500 font-bold">Cutting Edge Aim</div>
+                                <div className="text-4xl font-black text-white">+80</div>
+                                <div className="text-xs uppercase tracking-widest text-midnight-500 font-bold">Miembros Activos</div>
                             </div>
                             <div className="space-y-2">
-                                <div className="text-4xl font-black text-white">+15k</div>
-                                <div className="text-xs uppercase tracking-widest text-midnight-500 font-bold">Comunidad Activa</div>
+                                <div className="text-4xl font-black text-white">+4</div>
+                                <div className="text-xs uppercase tracking-widest text-midnight-500 font-bold">Años Juntos</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="relative">
-                        <div className="aspect-square bg-void/5 rounded-3xl border border-white/5 flex items-center justify-center p-12 relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-br from-void/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                            <Sword className="text-void-light opacity-20 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" size={200} />
-                            <div className="absolute bottom-8 left-8 right-8 p-6 glass rounded-2xl border border-white/10 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
-                                <p className="text-sm font-medium text-white/80 italic">"Donde otros ven sombras, nosotros vemos nuestro hogar."</p>
+                    <div className="relative group/video">
+                        {/* Cajas Decorativas de Fondo - Tan añade profundidad y misterio */}
+                        <div className="absolute -inset-4 bg-void/5 rounded-[48px] blur-2xl opacity-0 group-hover/video:opacity-100 transition-opacity duration-700"></div>
+                        <div className="absolute inset-0 translate-x-4 translate-y-4 border border-white/10 rounded-[32px] pointer-events-none group-hover/video:translate-x-6 group-hover/video:translate-y-6 transition-all duration-700"></div>
+
+                        <a
+                            href="https://www.youtube.com/watch?v=gmgDuwiOcgQ"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block aspect-video bg-black rounded-[32px] border border-white/10 relative overflow-hidden z-10 shadow-2xl transition-transform duration-700 group-hover/video:-translate-x-2 group-hover/video:-translate-y-2 cursor-pointer"
+                        >
+                            {/* Overlay para capturar el click y dar estilo */}
+                            <div className="absolute inset-0 z-20 bg-void/10 group-hover:bg-transparent transition-colors duration-500"></div>
+
+                            {/* Iframe del video - Tan recupera el ratio original para máxima nitidez */}
+                            <iframe
+                                className="absolute inset-0 w-full h-full pointer-events-none transition-all duration-700"
+                                src="https://www.youtube.com/embed/gmgDuwiOcgQ?autoplay=1&mute=1&controls=0&loop=1&playlist=gmgDuwiOcgQ&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&vq=hd1080"
+                                title="Hellheim Cinematic"
+                                frameBorder="0"
+                                allow="autoplay; encrypted-media"
+                            />
+
+                            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 bg-black/40 backdrop-blur-sm">
+                                <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center border border-white/20 mb-4">
+                                    <ExternalLink size={24} className="text-white" />
+                                </div>
+                                <p className="text-xs font-black text-white uppercase tracking-[0.3em]">Ver en Alta Calidad</p>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </section>
