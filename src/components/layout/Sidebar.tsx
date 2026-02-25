@@ -24,7 +24,7 @@ const navItems = [
     { name: 'Cuota', path: '/quota', icon: Scroll },
     { name: 'Loot', path: '/loot', icon: Coins },
     { name: 'Perfil', path: '/perfil', icon: User },
-    { name: 'CMS Web', path: '/cms', icon: LayoutDashboard },
+    { name: 'Postulaciones', path: '/applications', icon: Users },
     { name: 'Usuarios', path: '/users', icon: Shield },
 ];
 
@@ -49,7 +49,7 @@ export const Sidebar: React.FC = () => {
 
     // Tan: Solo los oficiales ven herramientas avanzadas
     const TanMenuItems = navItems.filter(item => {
-        if (item.path === '/cms' || item.path === '/users') {
+        if (item.path === '/cms' || item.path === '/users' || item.path === '/applications') {
             return isAdmin;
         }
         return true;

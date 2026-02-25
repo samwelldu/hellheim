@@ -343,9 +343,9 @@ export const LandingPage: React.FC = () => {
                             Las inscripciones para la core de raid en Midnight ya están abiertas. <br /> Únete a nuestro Discord y postula hoy mismo.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <button className="w-full sm:w-auto bg-white text-black font-black px-12 py-5 rounded-full hover:scale-105 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3">
+                            <Link to="/apply" className="w-full sm:w-auto bg-white text-black font-black px-12 py-5 rounded-full hover:scale-105 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3">
                                 <Users size={20} /> Aplicar Ahora
-                            </button>
+                            </Link>
                             <Link to="/login" className="w-full sm:w-auto text-white/50 hover:text-white font-bold px-12 py-5 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2 group">
                                 Acceso Jugadores <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                             </Link>

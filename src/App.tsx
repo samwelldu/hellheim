@@ -14,6 +14,8 @@ import { Loot } from './UI/módulos/Loot/Loot';
 import { CMSPage } from './pages/CMSPage';
 import { AuthCallback } from './pages/AuthCallback';
 import { PerfilPage } from './pages/PerfilPage';
+import { ApplyPage } from './pages/ApplyPage';
+import { ApplicationsPage } from './pages/ApplicationsPage';
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
           <Routes>
             {/* Landing Page Pública */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/apply" element={<ApplyPage />} />
 
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
@@ -78,6 +81,14 @@ function App() {
               <PrivateRoute>
                 <Layout>
                   <CMSPage />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            <Route path="/applications" element={
+              <PrivateRoute>
+                <Layout>
+                  <ApplicationsPage />
                 </Layout>
               </PrivateRoute>
             } />
