@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+﻿import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth, db } from '../config/firebase';
@@ -15,7 +15,6 @@ interface AuthContextType {
     playerToken: string | null;
     isAdmin: boolean;
     loading: boolean;
-    isRoleSettled: boolean;
     setBlizzardUser: (user: any) => void;
     setMainCharacter: (char: any) => Promise<void>;
 }
@@ -28,7 +27,6 @@ const AuthContext = createContext<AuthContextType>({
     playerToken: null,
     isAdmin: false,
     loading: true,
-    isRoleSettled: false,
     setBlizzardUser: () => { },
     setMainCharacter: async () => { }
 });
@@ -40,8 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [mainCharacter, setMainCharacter] = useState<any | null>(null);
     const [playerToken, setPlayerToken] = useState<string | null>(null); // Initialized playerToken state
     const [loading, setLoading] = useState(true);
-    const [isRoleSettled, setIsRoleSettled] = useState(false); // Tan: Previene redirección prematura
-
 
     useEffect(() => {
         // Tan: Recuperamos usuario de Blizzard de sessionStorage si existe
@@ -71,23 +67,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (user) {
                 try {
-                    // Tan: userService.ts guarda los roles administrativos usando el EMAIL como Document ID
-                    // Debemos priorizar buscar por email (si existe) o por UID (legacy/Blizzard)
-                    const emailDocRef = user.email ? doc(db, 'USERS', user.email) : null;
-                    const uidDocRef = doc(db, 'USERS', user.uid);
+                    // Load user role from Firestore
+                    const userDocRef = doc(db, 'USERS', user.uid);
+                    const userDoc = await getDoc(userDocRef);
 
-                    let userDoc = emailDocRef ? await getDoc(emailDocRef) : null;
-
-                    if (!userDoc?.exists()) {
-                        userDoc = await getDoc(uidDocRef);
-                    }
-
-                    if (userDoc?.exists()) {
+                    if (userDoc.exists()) {
                         const data = userDoc.data();
                         setUserRole(data.role || 'member');
                         setMainCharacter(data.mainCharacter || null);
                     } else {
-                        // Respaldo estructural (Autocreación de UID)
+                        // User document doesn't exist, create it
+                        // Check if this is the first user (auto-promote to admin)
                         const usersCollection = collection(db, 'USERS');
                         const adminQuery = query(usersCollection, where('role', '==', 'admin'));
                         const adminSnapshot = await getDocs(adminQuery);
@@ -95,10 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         const isFirstUser = adminSnapshot.empty;
                         const newRole = isFirstUser ? 'admin' : 'member';
 
-                        // Creamos usando el UID si es el primer usuario, aunque el email es más seguro
-                        const targetRef = user.email ? emailDocRef! : uidDocRef;
-
-                        await setDoc(targetRef, {
+                        await setDoc(userDocRef, {
                             email: user.email,
                             role: newRole,
                             displayName: user.displayName || user.email?.split('@')[0] || 'Unknown',
@@ -107,6 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         });
 
                         setUserRole(newRole);
+                        console.log(`User created with role: ${newRole}${isFirstUser ? ' (first user, auto-admin)' : ''}`);
                     }
                 } catch (error) {
                     console.error('Error loading user role:', error);
@@ -119,14 +107,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUserRole(null);
             }
 
-            // Tan: Declarar que hemos terminado de averiguar quién es
-            setIsRoleSettled(true);
             setLoading(false);
         });
         return () => unsubscribe();
     }, [blizzardUser]);
 
-    // Tan: Recuperamos el usuario de Blizzard si existe en la sesión
+    // Tan: Recuperamos el usuario de Blizzard si existe en la sesi├│n
     useEffect(() => {
         const saved = sessionStorage.getItem('TanBlizzardUser');
         if (saved) {
@@ -142,7 +128,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const token = data.id.toLowerCase().replace('#', '-');
                 setPlayerToken(token);
 
-                // Tan: Registro automático en Firestore para usuarios de Blizzard
+                // Tan: Registro autom├ítico en Firestore para usuarios de Blizzard
                 try {
                     const userDocRef = doc(db, 'USERS', data.id);
                     const userDoc = await getDoc(userDocRef);
@@ -164,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setMainCharacter(existingData.mainCharacter || null);
                     }
 
-                    // Tan: Sincronización del Mapa de Identidades (Personaje -> PlayerToken)
+                    // Tan: Sincronizaci├│n del Mapa de Identidades (Personaje -> PlayerToken)
                     // Esto permite que el sistema de Oro atribuya aportes de alters al mismo jugador
                     console.log(`[TanSystem] Sincronizando mapa de personajes para ${data.id}...`);
                     const blizzardData = await blizzardService.getUserCharacters(data.token, data.region || 'us');
@@ -202,7 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         try {
-            // Tan: Gestión de Migración de Identidad (Evita duplicados)
+            // Tan: Gesti├│n de Migraci├│n de Identidad (Evita duplicados)
             const oldMain = mainCharacter;
             const newDocId = `${charData.name.trim().toLowerCase()}-${charData.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
 
@@ -217,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 ]);
             }
 
-            // Tan: Actualización del documento de Usuario
+            // Tan: Actualizaci├│n del documento de Usuario
             const userDocRef = doc(db, 'USERS', userId);
             await setDoc(userDocRef, {
                 mainCharacter: charData,
@@ -225,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 updatedAt: Date.now()
             }, { merge: true });
 
-            // Tan: Sincronización de Nombre en Tesorería (Evita desvinculación en Dashboard)
+            // Tan: Sincronizaci├│n de Nombre en Tesorer├¡a (Evita desvinculaci├│n en Dashboard)
             if (playerToken) {
                 const quoteRef = doc(db, 'quote', playerToken);
                 await setDoc(quoteRef, {
@@ -236,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setMainCharacter(charData);
 
-            // Tan: Sincronización final con Blizzard para asegurar datos frescos
+            // Tan: Sincronizaci├│n final con Blizzard para asegurar datos frescos
             console.log(`[TanSystem] Vinculando progreso del nuevo main: ${charData.name}`);
             await Promise.allSettled([
                 mythicPlusService.syncWithBlizzard(charData.name, charData.realm),
@@ -249,14 +235,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    // Tan: Centralizamos la verificación de oficialía (Solo Firebase Auth puede administrar)
-    // Se acepta 'admin', 'supervisor', o variaciones de capitalización.
-    const isAdmin = !!user && (
-        userRole?.toLowerCase() === 'admin' ||
-        userRole?.toLowerCase() === 'supervisor' ||
-        userRole?.toLowerCase() === 'oficial' ||
-        userRole?.toLowerCase() === 'owner'
-    );
+    // Tan: Centralizamos la verificaci├│n de oficial├¡a (Solo Firebase Auth puede ser Admin)
+    const isAdmin = !!user && userRole === 'admin';
 
     return (
         <AuthContext.Provider value={{
@@ -267,7 +247,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             playerToken,
             isAdmin,
             loading,
-            isRoleSettled,
             setBlizzardUser: TanSetBlizzardUser,
             setMainCharacter: TanActualizarMain
         }}>

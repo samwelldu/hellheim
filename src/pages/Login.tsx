@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,8 +17,7 @@ export const Login: React.FC = () => {
     const [TanModoAdmin, setTanModoAdmin] = useState(false);
     const [region, setRegion] = useState<'us' | 'eu'>('us');
     const [TanEslogan, setTanEslogan] = useState("Hermandad de la Sombra");
-    const navigate = useNavigate();
-    const { user, blizzardUser, loading } = useAuth();
+    const { user, blizzardUser, loading, isRoleSettled } = useAuth();
 
     useEffect(() => {
         const unsubscribe = cmsService.subscribeToLanding((content) => {
@@ -30,13 +29,17 @@ export const Login: React.FC = () => {
     }, []);
 
     if (loading) return null;
-    if (user || blizzardUser) return <Navigate to="/dashboard" replace />;
+
+    // Tan: Solo redirigimos si 1) Ya definimos quién eres y 2) Tienes sesión
+    if (isRoleSettled && (user || blizzardUser)) {
+        return <Navigate to="/dashboard" replace />;
+    }
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            navigate('/dashboard');
+            // Tan: Eliminamos navigate() manual para que actúe el AuthContext cuando defina roles
         } catch (err: any) {
             setError('Credenciales de oficialía inválidas.');
             console.error(err);
