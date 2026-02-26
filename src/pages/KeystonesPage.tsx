@@ -200,7 +200,7 @@ export const KeystonesPage: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-fade-in p-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-midnight-800/50 p-6 rounded-2xl border border-midnight-700 backdrop-blur-md relative z-50">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 glass p-6 rounded-2xl relative z-50">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-midnight-900 rounded-xl border border-midnight-700 shadow-lg">
                         <Shield className="text-void-light" size={32} />

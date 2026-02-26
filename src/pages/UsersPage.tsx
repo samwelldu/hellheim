@@ -236,7 +236,7 @@ export const UsersPage: React.FC = () => {
                                     setMyAlias(myAppUser?.alias || '');
                                     setIsAliasModalOpen(true);
                                 }}
-                                className="px-4 py-2 bg-midnight-800 border border-midnight-600 hover:bg-midnight-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                                className="px-4 py-2 bg-black/40 border border-white/10 hover:bg-black/60 text-white rounded-lg flex items-center gap-2 transition-all shadow-lg"
                             >
                                 <User size={18} />
                                 <span className="hidden md:inline">{myAppUser?.alias || 'Sin Alias'}</span>
@@ -244,7 +244,7 @@ export const UsersPage: React.FC = () => {
 
                             <button
                                 onClick={() => setIsPasswordModalOpen(true)}
-                                className="px-4 py-2 bg-midnight-800 border border-midnight-600 hover:bg-midnight-700 text-white rounded-lg flex items-center gap-2 transition-colors"
+                                className="px-4 py-2 bg-black/40 border border-white/10 hover:bg-black/60 text-white rounded-lg flex items-center gap-2 transition-all shadow-lg"
                             >
                                 <Key size={18} />
                             </button>
@@ -269,9 +269,9 @@ export const UsersPage: React.FC = () => {
             )}
 
             {/* Users List */}
-            <div className="overflow-hidden bg-midnight-900/40 rounded-3xl border border-midnight-700 shadow-2xl">
-                <table className="w-full text-left">
-                    <thead className="bg-midnight-950/80 text-midnight-500 uppercase text-[10px] font-black tracking-[0.2em] border-b border-midnight-700/50">
+            <div className="overflow-hidden glass relative">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-black text-midnight-500 uppercase text-[10px] font-black tracking-[0.2em] border-b border-white/5">
                         <tr>
                             <th className="p-6">Identidad / BattleTag</th>
                             <th className="p-6">Personaje Principal</th>
@@ -280,7 +280,7 @@ export const UsersPage: React.FC = () => {
                             <th className="p-6 text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-midnight-700/20">
+                    <tbody className="divide-y divide-white/[0.02]">
                         {loading ? (
                             <tr><td colSpan={5} className="p-20 text-center text-midnight-500 font-black animate-pulse">Consultando archivos...</td></tr>
                         ) : users.length === 0 ? (
@@ -293,7 +293,7 @@ export const UsersPage: React.FC = () => {
                                 const isMe = (user.email && user.email === currentUser?.email) || (user.accountId && user.accountId === blizzardUser?.id);
 
                                 return (
-                                    <tr key={user.id} className="hover:bg-void/5 transition-all duration-300 group">
+                                    <tr key={user.id} className="bg-black/40 hover:bg-black/60 transition-all duration-300 group border-b border-white/5 last:border-0">
                                         <td className="p-6">
                                             <div className="flex flex-col">
                                                 <span className={clsx("text-lg font-black tracking-tight", user.accountId ? "text-void-light" : "text-white")}>
@@ -397,20 +397,20 @@ export const UsersPage: React.FC = () => {
                             placeholder="email@example.com"
                             value={newUserEmail}
                             onChange={(e) => setNewUserEmail(e.target.value)}
-                            className="w-full px-4 py-2 bg-midnight-950 border border-midnight-600 rounded-lg focus:outline-none focus:border-void-light text-white"
+                            className="w-full px-4 py-3 bg-black/60 border border-white/5 rounded-xl focus:outline-none focus:border-void/50 text-white transition-all"
                             required
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-midnight-300">Contraseña</label>
+                        <label className="text-[10px] uppercase font-black tracking-widest text-midnight-500 px-1">Contraseña</label>
                         <div className="relative">
                             <input
                                 type={showCreatePassword ? "text" : "password"}
-                                placeholder="password123"
+                                placeholder="••••••••"
                                 value={newUserPassword}
                                 onChange={(e) => setNewUserPassword(e.target.value)}
-                                className="w-full px-4 py-2 bg-midnight-950 border border-midnight-600 rounded-lg focus:outline-none focus:border-void-light text-white pr-10"
+                                className="w-full px-4 py-3 bg-black/60 border border-white/5 rounded-xl focus:outline-none focus:border-void/50 text-white pr-12 transition-all"
                                 minLength={6}
                                 required
                             />
@@ -425,11 +425,11 @@ export const UsersPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-midnight-300">Rol Inicial</label>
+                        <label className="text-[10px] uppercase font-black tracking-widest text-midnight-500 px-1">Rol Inicial</label>
                         <select
                             value={newUserRole}
                             onChange={(e) => setNewUserRole(e.target.value as UserRole)}
-                            className="w-full px-4 py-2 bg-midnight-950 border border-midnight-600 rounded-lg focus:outline-none focus:border-void-light text-white"
+                            className="w-full px-4 py-3 bg-black/60 border border-white/5 rounded-xl focus:outline-none focus:border-void-light text-white transition-all font-black uppercase text-xs"
                         >
                             <option value="member">Miembro</option>
                             <option value="supervisor">Supervisor</option>
@@ -480,7 +480,7 @@ export const UsersPage: React.FC = () => {
                                 type={showSelfPassword ? "text" : "password"}
                                 value={newSelfPassword}
                                 onChange={(e) => setNewSelfPassword(e.target.value)}
-                                className="w-full px-4 py-2 bg-midnight-950 border border-midnight-600 rounded-lg focus:outline-none focus:border-void-light text-white pr-10"
+                                className="w-full px-4 py-3 bg-black/60 border border-white/5 rounded-xl focus:outline-none focus:border-void/50 text-white pr-12 transition-all"
                                 minLength={6}
                                 required
                             />
@@ -536,7 +536,7 @@ export const UsersPage: React.FC = () => {
                             placeholder="Ej: Thrall, Jaina, Sylvanas"
                             value={myAlias}
                             onChange={(e) => setMyAlias(e.target.value)}
-                            className="w-full px-4 py-2 bg-midnight-950 border border-midnight-600 rounded-lg focus:outline-none focus:border-void-light text-white"
+                            className="w-full px-4 py-3 bg-black/60 border border-white/5 rounded-xl focus:outline-none focus:border-void/50 text-white transition-all"
                             required
                             minLength={3}
                             maxLength={20}

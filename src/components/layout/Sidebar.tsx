@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import {
     Shield,
     Scroll,
@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { cmsService } from '../../services/cmsService';
 
 const navItems = [
     { name: 'Página principal', path: '/', icon: Home },
@@ -38,6 +39,16 @@ export const Sidebar: React.FC = () => {
     const [isOpen, setIsOpen] = React.useState(false);
     const { user, blizzardUser, isAdmin, setBlizzardUser } = useAuth();
     const navigate = useNavigate();
+    const [TanEslogan, setTanEslogan] = React.useState("MIDNIGHT");
+
+    React.useEffect(() => {
+        const unsubscribe = cmsService.subscribeToLanding((content) => {
+            if (content?.hero?.subtitle) {
+                setTanEslogan(content.hero.subtitle);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     const toggleOpen = () => setIsOpen(!isOpen);
 
@@ -85,18 +96,22 @@ export const Sidebar: React.FC = () => {
                             !isOpen && "hidden md:block" // Force block on desktop
                         )}
                     >
-                        <div className="flex flex-col h-full p-6">
+                        <div className="flex flex-col h-full p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                             {/* Logo / Header */}
-                            <div className="mb-10 text-center">
-                                <h1 className="text-3xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-void-light to-accent-cyan animate-pulse">
-                                    HELLHEIM
-                                </h1>
+                            <div className="mb-10 text-center flex flex-col items-center">
+                                <Link to="/" className="block group/logo cursor-pointer">
+                                    <img
+                                        src="/logo_hellheim_ice.png"
+                                        alt="Hellheim Logo"
+                                        className="w-32 h-auto object-contain transition-all duration-500 group-hover/logo:scale-110 drop-shadow-[0_0_15px_rgba(0,195,255,0.3)]"
+                                    />
+                                </Link>
                                 {blizzardUser ? (
                                     <div className="mt-2 text-[10px] font-black p-1 bg-[#00c3ff]/10 border border-[#00c3ff]/20 rounded-md text-[#00c3ff] uppercase tracking-widest shadow-[0_0_10px_rgba(0,195,255,0.1)]">
                                         {blizzardUser.displayName} ⚔️
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-midnight-400 tracking-wider mt-1">MIDNIGHT</p>
+                                    <p className="text-sm text-midnight-400 tracking-wider mt-1 uppercase font-black">{TanEslogan}</p>
                                 )}
                             </div>
 

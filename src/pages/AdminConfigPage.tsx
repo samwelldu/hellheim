@@ -31,8 +31,8 @@ export const AdminConfigPage: React.FC = () => {
     return (
         <div className="space-y-8 animate-fade-in p-6">
             {/* Header */}
-            <div className="flex items-center gap-4 bg-midnight-800/50 p-6 rounded-2xl border border-midnight-700 backdrop-blur-md">
-                <div className="p-3 bg-midnight-900 rounded-xl border border-midnight-700 shadow-lg">
+            <div className="flex items-center gap-4 glass p-6 relative">
+                <div className="p-3 bg-black/40 rounded-xl border border-white/5 shadow-lg">
                     <Settings className="text-void-light" size={32} />
                 </div>
                 <div>
@@ -44,7 +44,7 @@ export const AdminConfigPage: React.FC = () => {
             {/* Main Content */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Purge Card */}
-                <div className="bg-midnight-900/40 border border-midnight-800 rounded-2xl p-6 hover:border-red-900/30 transition-all group">
+                <div className="glass p-6 hover:border-red-900/30 transition-all group relative overflow-hidden">
                     <div className="flex items-start justify-between mb-6">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-red-900/20 text-red-500 rounded-lg group-hover:scale-110 transition-transform">
@@ -80,12 +80,12 @@ export const AdminConfigPage: React.FC = () => {
                                 placeholder="Escribe PURGAR aquí"
                                 value={confirmText}
                                 onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
-                                className="w-full bg-midnight-950 border border-red-900/30 rounded-xl p-3 text-white text-center font-mono focus:border-red-500 focus:outline-none transition-all"
+                                className="w-full bg-black/60 border border-red-900/30 rounded-xl p-3 text-white text-center font-mono focus:border-red-500 focus:outline-none transition-all"
                             />
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => { setShowConfirm(false); setConfirmText(''); }}
-                                    className="flex-1 py-3 bg-midnight-800 hover:bg-midnight-700 text-white rounded-xl font-bold text-xs"
+                                    className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold text-xs transition-all border border-white/5"
                                 >
                                     Cancelar
                                 </button>
@@ -94,7 +94,7 @@ export const AdminConfigPage: React.FC = () => {
                                     onClick={handlePurge}
                                     className={clsx(
                                         "flex-[2] py-3 rounded-xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all",
-                                        confirmText === 'PURGAR' ? "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/20" : "bg-midnight-800 text-midnight-600 cursor-not-allowed"
+                                        confirmText === 'PURGAR' ? "bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/20" : "bg-black/40 text-midnight-600 cursor-not-allowed border border-white/5"
                                     )}
                                 >
                                     {isPurging ? <RefreshCw size={14} className="animate-spin" /> : <AlertTriangle size={14} />}
@@ -106,7 +106,7 @@ export const AdminConfigPage: React.FC = () => {
                 </div>
 
                 {/* Status Card (Future implementation placeholders) */}
-                <div className="bg-midnight-900/40 border border-midnight-800 rounded-2xl p-6 relative overflow-hidden">
+                <div className="glass p-6 relative overflow-hidden">
                     <div className="absolute top-0 right-0 p-8 opacity-5">
                         <Settings size={120} className="animate-spin-slow" />
                     </div>
@@ -117,15 +117,15 @@ export const AdminConfigPage: React.FC = () => {
                     </h2>
 
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center p-3 bg-midnight-950/40 rounded-xl border border-midnight-800">
+                        <div className="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5">
                             <span className="text-xs text-midnight-400 font-medium">Conexión Firebase</span>
                             <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">ONLINE</span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-midnight-950/40 rounded-xl border border-midnight-800">
+                        <div className="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5">
                             <span className="text-xs text-midnight-400 font-medium">Blizzard Proxy</span>
                             <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">ACTIVO</span>
                         </div>
-                        <div className="flex justify-between items-center p-3 bg-midnight-950/40 rounded-xl border border-midnight-800 opacity-50">
+                        <div className="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5 opacity-50">
                             <span className="text-xs text-midnight-400 font-medium">Modo Producción</span>
                             <span className="text-[10px] bg-void/10 text-void-light px-2 py-0.5 rounded-full border border-void/20 font-bold uppercase">Staging</span>
                         </div>

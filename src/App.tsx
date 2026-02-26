@@ -17,6 +17,7 @@ import { PerfilPage } from './pages/PerfilPage';
 import { ApplyPage } from './pages/ApplyPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { AdminConfigPage } from './pages/AdminConfigPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 
 function App() {
   return (
@@ -107,6 +108,12 @@ function App() {
                 <Layout>
                   <AdminConfigPage />
                 </Layout>
+              </PrivateRoute>
+            } />
+
+            <Route path="/onboarding" element={
+              <PrivateRoute skipOnboardingCheck>
+                <OnboardingPage />
               </PrivateRoute>
             } />
 

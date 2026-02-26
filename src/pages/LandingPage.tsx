@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { useAuth } from '../context/AuthContext';
+import { PublicNavbar } from '../UI/componentes/PublicNavbar';
 import { cmsService, type LandingContent, type GuildNews } from '../services/cmsService';
 
 const B_ICON_MAP: Record<string, any> = {
@@ -91,19 +92,16 @@ export const LandingPage: React.FC = () => {
 
     return (
         <div className="bg-[#05020a] text-white min-h-screen font-sans selection:bg-void selection:text-white">
-            {/* Navbar / Direct Access */}
-            <nav className="absolute top-0 right-0 p-8 z-50">
-                <Link to={user ? "/dashboard" : "/login"} className="px-6 py-2 bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 rounded-full text-xs font-black uppercase tracking-widest transition-all">
-                    {user ? "Perfil Jugador" : "Acceso Jugadores"}
-                </Link>
-            </nav>
+            <PublicNavbar />
 
             {/* Hero Section - La bienvenida de Tan a la hermandad */}
-            <ParallaxHero
-                TanTitulo={content.hero.title}
-                TanSubtitulo={content.hero.subtitle}
-                TanBannerVisual="/BANNER_WOW.jpg"
-            />
+            <section id="hero">
+                <ParallaxHero
+                    TanTitulo={content.hero.title}
+                    TanSubtitulo={content.hero.subtitle}
+                    TanBannerVisual="/BANNER_WOW.jpg"
+                />
+            </section>
 
             {/* Vision Section */}
             <section className="relative px-6 py-32 overflow-hidden">
@@ -167,7 +165,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* WoWHead News Section (Retail US) */}
-            <section className="py-32 px-6 bg-gradient-to-b from-[#05020a] to-[#05020a]/50">
+            <section id="news" className="py-32 px-6 bg-gradient-to-b from-[#05020a] to-[#05020a]/50">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row items-end justify-between mb-16 gap-6">
                         <div className="space-y-4">
@@ -304,7 +302,7 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* Recruitment / Classes Section */}
-            <section className="bg-[#05020a]/50 py-32 px-6">
+            <section id="recruitment" className="bg-[#05020a]/50 py-32 px-6">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-20 space-y-4">
                         <h2 className="text-4xl md:text-5xl font-black tracking-tight uppercase">Buscamos Talento</h2>
@@ -357,8 +355,12 @@ export const LandingPage: React.FC = () => {
             </section>
 
             {/* Simple Footer */}
-            <footer className="py-20 px-6 text-center">
-                <div className="text-2xl font-black tracking-tighter mb-4">MIDNIGHT GUILD</div>
+            <footer className="py-20 px-6 text-center flex flex-col items-center">
+                <img
+                    src="/logo_hellheim_ice.png"
+                    alt="Hellheim Logo"
+                    className="w-32 h-auto object-contain mb-6 opacity-80 hover:opacity-100 transition-opacity duration-500"
+                />
                 <p className="text-midnight-600 text-xs font-bold uppercase tracking-widest">© 2026 World of Warcraft - Hermandad Privada</p>
             </footer>
 

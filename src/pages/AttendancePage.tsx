@@ -227,7 +227,7 @@ export const AttendancePage: React.FC = () => {
     return (
         <div className="space-y-8 animate-fade-in p-6">
             {/* Header */}
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-midnight-800/50 p-6 rounded-2xl border border-midnight-700 backdrop-blur-md">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 glass p-6 rounded-2xl relative z-50">
                 <div className="flex items-center gap-4">
                     <div className="p-4 bg-midnight-900 rounded-xl border border-midnight-700 shadow-lg">
                         <Shield className="text-accent-cyan" size={32} />
@@ -273,7 +273,7 @@ export const AttendancePage: React.FC = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-midnight-900/30 border border-midnight-700 rounded-xl p-6"
+                    className="glass rounded-xl p-6"
                 >
                     <form onSubmit={handleWclSubmit} className="flex flex-col md:flex-row gap-4 items-end">
                         <div className="flex-1 w-full">
@@ -305,7 +305,7 @@ export const AttendancePage: React.FC = () => {
             )}
 
             {/* Roster Controls */}
-            <div className="flex justify-between items-center bg-midnight-900/30 p-4 rounded-xl border border-midnight-700">
+            <div className="flex justify-between items-center glass p-4 rounded-xl">
                 <div className="flex items-center gap-4 flex-1">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-midnight-500" size={16} />
@@ -334,8 +334,8 @@ export const AttendancePage: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="bg-midnight-900/30 border border-midnight-700 rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between p-4 border-b border-midnight-700 bg-midnight-950/50">
+            <div className="glass rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between p-4 border-b border-white/5 bg-black/60">
                     <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2">
                         <Users size={18} className="text-midnight-400" />
                         Roster Oficial
@@ -343,7 +343,7 @@ export const AttendancePage: React.FC = () => {
                 </div>
                 <div className="overflow-x-auto max-h-[600px] scrollbar-thin scrollbar-thumb-midnight-700 scrollbar-track-transparent">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-midnight-950/80 sticky top-0 z-10 text-midnight-400 uppercase text-[10px] tracking-[0.2em] font-black backdrop-blur-md border-b border-midnight-700/50">
+                        <thead className="bg-[#030105] sticky top-0 z-10 text-midnight-400 uppercase text-[10px] tracking-[0.2em] font-black backdrop-blur-md border-b border-white/5">
                             <tr>
                                 <th className="p-5 border-b border-midnight-700/50">Nombre</th>
                                 <th className="p-5 border-b border-midnight-700/50 text-center">Nivel</th>

@@ -85,7 +85,7 @@ export const CMSPage: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-fade-in p-6">
-            <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-midnight-800/50 p-8 rounded-3xl border border-midnight-700 backdrop-blur-md">
+            <header className="flex flex-col md:flex-row items-center justify-between gap-6 glass p-8 rounded-3xl relative">
                 <div className="flex items-center gap-6">
                     <div className="p-5 bg-void/10 rounded-2xl border border-void/20 shadow-2xl shadow-void/10">
                         <Settings className="text-void-light" size={40} />
@@ -100,7 +100,7 @@ export const CMSPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex bg-midnight-950/50 p-1.5 rounded-2xl border border-midnight-700">
+                <div className="flex bg-black/60 p-1.5 rounded-2xl border border-white/5">
                     <button
                         onClick={() => setActiveTab('general')}
                         className={clsx(
@@ -137,8 +137,8 @@ export const CMSPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Hero Settings */}
-                        <div className="bg-midnight-900/40 p-1 rounded-[32px] border border-midnight-800 shadow-2xl">
-                            <div className="bg-midnight-800/40 p-10 rounded-[28px] border border-midnight-700/30 space-y-8">
+                        <div className="glass p-1 relative">
+                            <div className="bg-black/40 p-10 rounded-[28px] border border-white/5 space-y-8">
                                 <h2 className="text-2xl font-black text-white flex items-center gap-3"><Layout className="text-void-light" size={24} /> Banner Principal</h2>
 
                                 <div className="space-y-6">
@@ -177,8 +177,8 @@ export const CMSPage: React.FC = () => {
                         </div>
 
                         {/* Vision Settings */}
-                        <div className="bg-midnight-900/40 p-1 rounded-[32px] border border-midnight-800 shadow-2xl">
-                            <div className="bg-midnight-800/40 p-10 rounded-[28px] border border-midnight-700/30 space-y-8">
+                        <div className="glass p-1 relative">
+                            <div className="bg-black/40 p-10 rounded-[28px] border border-white/5 space-y-8">
                                 <h2 className="text-2xl font-black text-white flex items-center gap-3"><Users className="text-void-light" size={24} /> Nuestra Visión</h2>
 
                                 <div className="space-y-6">
@@ -211,8 +211,8 @@ export const CMSPage: React.FC = () => {
                         </div>
 
                         {/* Recruitment Settings */}
-                        <div className="lg:col-span-2 bg-midnight-900/40 p-1 rounded-[32px] border border-midnight-800 shadow-2xl">
-                            <div className="bg-midnight-800/40 p-10 rounded-[28px] border border-midnight-700/30 space-y-10">
+                        <div className="lg:col-span-2 glass p-1 relative">
+                            <div className="bg-black/40 p-10 rounded-[28px] border border-white/5 space-y-10">
                                 <h2 className="text-2xl font-black text-white flex items-center gap-3"><RefreshCw className="text-void-light" size={24} /> Estado del Reclutamiento</h2>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -231,7 +231,7 @@ export const CMSPage: React.FC = () => {
                                                 <p className="text-[10px] text-midnight-500 uppercase font-black tracking-widest">Priority Status</p>
                                             </div>
                                             <select
-                                                className="w-full bg-midnight-950 border-2 border-midnight-700 rounded-2xl px-4 py-3 text-sm outline-none focus:border-void text-white font-black text-center"
+                                                className="w-full bg-black border-2 border-white/5 rounded-2xl px-4 py-3 text-sm outline-none focus:border-void-light text-white font-black text-center"
                                                 value={item.status}
                                                 onChange={e => {
                                                     const newRec = [...content.recruitment];
@@ -263,7 +263,7 @@ export const CMSPage: React.FC = () => {
                     </div>
 
                     {isAddingNews && (
-                        <div className="bg-midnight-900/60 p-10 rounded-[32px] border-2 border-void/30 space-y-8 animate-scale-in">
+                        <div className="glass p-10 relative border-2 border-void/30 space-y-8 animate-scale-in">
                             <h2 className="text-2xl font-black text-white">Publicar Nueva Noticia</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="space-y-4">
@@ -301,7 +301,7 @@ export const CMSPage: React.FC = () => {
                                 <div className="space-y-3 flex flex-col">
                                     <label className="text-[10px] text-midnight-500 uppercase font-black tracking-widest px-1">Contenido / Cuerpo</label>
                                     <textarea
-                                        className="flex-1 w-full bg-black/40 border-2 border-midnight-700 rounded-2xl px-6 py-4 text-white focus:border-void outline-none transition-all resize-none leading-relaxed"
+                                        className="flex-1 w-full bg-black/60 border-2 border-white/5 rounded-2xl px-6 py-4 text-white focus:border-void outline-none transition-all resize-none leading-relaxed"
                                         value={newNews.content}
                                         onChange={e => setNewNews({ ...newNews, content: e.target.value })}
                                         placeholder="Escribe el contenido aquí..."
@@ -328,7 +328,7 @@ export const CMSPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {news.map((item) => (
-                            <div key={item.id} className="bg-midnight-900/40 rounded-[32px] border border-midnight-800 overflow-hidden group hover:border-void/30 transition-all flex flex-col">
+                            <div key={item.id} className="glass group relative flex flex-col overflow-hidden">
                                 {item.bannerUrl ? (
                                     <div className="h-48 overflow-hidden">
                                         <img src={item.bannerUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />

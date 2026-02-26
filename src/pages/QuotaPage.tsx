@@ -229,7 +229,7 @@ export const QuotaPage: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-fade-in p-6">
-            <header className="flex flex-col md:flex-row items-center justify-between gap-6 bg-midnight-800/50 p-6 rounded-2xl border border-midnight-700 backdrop-blur-md">
+            <header className="flex flex-col md:flex-row items-center justify-between gap-6 glass p-6 rounded-2xl relative z-50">
                 <div className="flex items-center gap-4">
                     <div className="p-4 bg-midnight-900 rounded-xl border border-midnight-700 shadow-xl">
                         <DollarSign className="text-yellow-500" size={32} />
@@ -263,8 +263,8 @@ export const QuotaPage: React.FC = () => {
                 )}
             </header>
 
-            <div className="bg-midnight-900/40 p-1 rounded-3xl border border-midnight-800 shadow-2xl">
-                <div className="bg-midnight-800/40 p-8 rounded-[22px] border border-midnight-700/50 flex flex-col lg:flex-row items-center justify-between gap-10">
+            <div className="bg-black/40 p-1 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="glass p-8 rounded-[22px] flex flex-col lg:flex-row items-center justify-between gap-10">
                     <div className="flex items-center gap-6">
                         <div className="p-5 bg-yellow-500/10 rounded-2xl border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.1)]">
                             <Crown className="text-yellow-500" size={32} />
@@ -305,7 +305,7 @@ export const QuotaPage: React.FC = () => {
                     )}
 
                     <div className="flex items-center gap-4">
-                        <div className="text-right px-8 py-4 bg-midnight-950/50 rounded-2xl border border-midnight-800/80 min-w-[200px] shadow-inner">
+                        <div className="text-right px-8 py-4 bg-black/60 rounded-2xl border border-white/5 min-w-[200px] shadow-inner">
                             <span className="block text-[10px] text-midnight-500 uppercase font-black tracking-[0.2em] mb-1">Valor Actual</span>
                             <span className="text-3xl font-black text-white drop-shadow-glow">
                                 {currentQuota ? formatGold(currentQuota) : '0g'}
@@ -335,12 +335,12 @@ export const QuotaPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {isAdmin && (
                     <div className="lg:col-span-1">
-                        <div className="bg-midnight-800/40 p-6 rounded-2xl border border-midnight-700/50 sticky top-6">
+                        <div className="glass p-6 rounded-2xl sticky top-6">
                             <h2 className="text-lg font-black text-white mb-6 uppercase tracking-widest flex items-center gap-3">
                                 <UploadCloud className="text-void-light" size={20} /> Subir LUA
                             </h2>
                             <div className="space-y-4">
-                                <div className="relative border-2 border-dashed border-midnight-700 rounded-2xl p-8 hover:border-void/50 transition-all group cursor-pointer text-center bg-midnight-950/30">
+                                <div className="relative border-2 border-dashed border-white/5 rounded-2xl p-8 hover:border-void/50 transition-all group cursor-pointer text-center bg-black/40">
                                     <input ref={fileInputRef} type="file" accept=".lua" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                                     <FileText className="mx-auto text-midnight-600 group-hover:text-void-light mb-4 transition-all duration-500 group-hover:scale-110" size={40} />
                                     <p className="text-xs text-midnight-500 group-hover:text-white transition-colors font-black uppercase tracking-widest">
@@ -358,7 +358,7 @@ export const QuotaPage: React.FC = () => {
                                     </div>
                                 )}
                                 {uploadStats && (
-                                    <div className="p-4 bg-midnight-950 rounded-xl border border-midnight-700 text-[10px] space-y-2 uppercase font-black tracking-widest animate-fade-in shadow-inner">
+                                    <div className="p-4 bg-black/60 rounded-xl border border-white/5 text-[10px] space-y-2 uppercase font-black tracking-widest animate-fade-in shadow-inner">
                                         <p className="text-green-500 flex justify-between"><span>✓ Integrados</span><span>{uploadStats.uploaded}</span></p>
                                         <p className="text-midnight-600 flex justify-between"><span>⚠ Duplicados</span><span>{uploadStats.duplicates}</span></p>
                                     </div>
@@ -376,8 +376,8 @@ export const QuotaPage: React.FC = () => {
                 <div className={isAdmin ? "lg:col-span-3" : "lg:col-span-4"}>
                     <div className="space-y-10">
                         {/* Tabla Principal */}
-                        <div className="bg-midnight-800/40 rounded-3xl border border-midnight-700/50 overflow-hidden shadow-2xl backdrop-blur-md">
-                            <div className="p-6 border-b border-midnight-700/50 flex justify-between items-center bg-midnight-900/50">
+                        <div className="glass rounded-3xl overflow-hidden shadow-2xl relative">
+                            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/60">
                                 <h3 className="font-black text-white uppercase tracking-[0.2em] text-xs flex items-center gap-3">
                                     <Crown size={16} className="text-yellow-500" /> Ranking Global de Oro
                                 </h3>
@@ -385,9 +385,9 @@ export const QuotaPage: React.FC = () => {
                                     <RotateCw size={16} className={loadingRanking ? "animate-spin" : ""} />
                                 </button>
                             </div>
-                            <div className="overflow-x-auto max-h-[700px] scrollbar-thin scrollbar-thumb-midnight-700">
+                            <div className="overflow-x-auto max-h-[700px] scrollbar-thin scrollbar-thumb-white/5">
                                 <table className="w-full text-left border-collapse">
-                                    <thead className="bg-midnight-950/80 sticky top-0 z-10 text-midnight-500 uppercase text-[10px] tracking-widest font-black border-b border-midnight-700/50">
+                                    <thead className="bg-black sticky top-0 z-10 text-midnight-500 uppercase text-[10px] tracking-widest font-black border-b border-white/5">
                                         <tr><th className="p-6 w-20 text-center">#</th><th className="p-6">Jugador Identificado</th><th className="p-6 text-right">Balance Total</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-midnight-700/20">
@@ -399,7 +399,7 @@ export const QuotaPage: React.FC = () => {
                                             ranking.map((row, idx) => {
                                                 const classColor = row.className ? getClassColor(row.className) : '#FFFFFF';
                                                 return (
-                                                    <tr key={idx} className="hover:bg-void/5 transition-all duration-300 group">
+                                                    <tr key={idx} className="bg-black/40 hover:bg-black/60 transition-all duration-300 group border-b border-white/5 last:border-0">
                                                         <td className="p-6 text-center">
                                                             {idx < 3 ? <div className="w-10 h-10 bg-midnight-900 rounded-xl flex items-center justify-center border border-midnight-700 mx-auto text-xl">{['🥇', '🥈', '🥉'][idx]}</div> : <span className="text-midnight-600 font-black text-lg">{idx + 1}</span>}
                                                         </td>

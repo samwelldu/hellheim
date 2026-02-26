@@ -229,8 +229,8 @@ export const Loot: React.FC = () => {
             </div>
 
             {isAdmin && (
-                <div className="bg-midnight-950/40 backdrop-blur-md border border-white/5 rounded-[32px] p-10">
-                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-2xl p-16 transition-all hover:bg-white/[0.02] hover:border-void-light/30 group relative overflow-hidden">
+                <div className="glass rounded-[32px] p-10">
+                    <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-2xl p-16 transition-all hover:bg-black/20 hover:border-void-light/30 group relative overflow-hidden">
                         <input
                             type="file"
                             accept=".json"
@@ -303,12 +303,12 @@ export const Loot: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-midnight-950/40 backdrop-blur-sm border border-white/5 rounded-[24px] overflow-hidden">
+                <div className="glass rounded-[24px] overflow-hidden">
                     {/* Tan aplica un scroll interno para que la web respire */}
                     <div className="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-white/[0.02] text-midnight-500 text-[10px] font-black uppercase tracking-[0.2em] border-b border-white/5">
+                                <tr className="bg-black text-midnight-500 text-[10px] font-black uppercase tracking-[0.2em] border-b border-white/5">
                                     <th className="px-8 py-5">Jugador</th>
                                     <th className="px-8 py-5">Objeto</th>
                                     <th className="px-8 py-5">Motivo</th>
@@ -321,7 +321,7 @@ export const Loot: React.FC = () => {
                                         // Normalizamos en tiempo de render para soportar datos antiguos en Firestore
                                         const display = normalizeLootItem(raw);
                                         return (
-                                            <tr key={raw.id} className="hover:bg-white/[0.03] transition-colors group">
+                                            <tr key={raw.id} className="bg-black/40 hover:bg-black/60 transition-colors group border-b border-white/5 last:border-0">
                                                 <td className="px-8 py-6">
                                                     <a
                                                         href={getRaiderIOUrl(display.name)}

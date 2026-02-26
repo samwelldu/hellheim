@@ -42,7 +42,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-left border-separate border-spacing-y-2">
-                <thead className="text-midnight-400 uppercase text-[10px] tracking-[0.2em] font-bold">
+                <thead className="text-midnight-500 uppercase text-[10px] tracking-[0.2em] font-black">
                     <tr>
                         <th className="px-4 pb-2 w-1/4">Personaje</th>
                         <th className="px-4 pb-2 text-center w-auto">Míticas 0</th>
@@ -83,10 +83,10 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                         return (
                             <tr
                                 key={char.id}
-                                className="bg-midnight-900/40 hover:bg-void/5 transition-all duration-300 group border border-midnight-800/50 rounded-2xl cursor-pointer shadow-sm relative overflow-hidden"
+                                className="bg-black/60 hover:bg-white/5 transition-all duration-300 group border border-white/5 rounded-2xl cursor-pointer shadow-2xl relative overflow-hidden"
                                 onClick={() => onCharacterClick(char)}
                             >
-                                <td className="p-5 bg-midnight-950/20 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-midnight-800/50 group-hover:bg-midnight-800/40 transition-colors">
+                                <td className="p-5 bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={clsx(
                                             "w-10 h-10 rounded-xl shadow-inner flex items-center justify-center border shrink-0 transition-transform group-hover:scale-110",
@@ -171,8 +171,8 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                     })()}
                                 </td>
 
-                                <td className="p-5 text-center bg-midnight-950/20 border-y border-midnight-800/50 group-hover:bg-midnight-800/40 transition-colors">
-                                    <div className="flex flex-col items-center justify-center p-3 bg-midnight-900/50 border border-midnight-800 rounded-2xl w-14 h-14 mx-auto shadow-inner group-hover:border-midnight-700 transition-colors">
+                                <td className="p-5 text-center bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
+                                    <div className="flex flex-col items-center justify-center p-3 bg-black/60 border border-white/5 rounded-2xl w-14 h-14 mx-auto shadow-inner group-hover:border-white/10 transition-colors">
                                         <span className="text-2xl font-black text-white drop-shadow-glow">
                                             {displayM0 + Object.values(displayHistory).reduce((a, b) => a + b, 0)}
                                         </span>
@@ -180,7 +180,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                     </div>
                                 </td>
 
-                                <td className="p-5 bg-midnight-950/20 border-y border-midnight-800/50 group-hover:bg-midnight-800/40 transition-colors">
+                                <td className="p-5 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex items-center justify-center gap-3">
                                         {[0, 1, 2].map(i => {
                                             const lvl = vaultSlots[i];
@@ -191,8 +191,8 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                                     className={clsx(
                                                         "w-12 h-16 rounded-xl flex flex-col items-center justify-center border transition-all relative overflow-hidden",
                                                         isUnlocked
-                                                            ? "bg-gradient-to-b from-midnight-800 to-midnight-900 border-void/50 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
-                                                            : "bg-midnight-950/50 border-midnight-800/40 text-midnight-800"
+                                                            ? "bg-gradient-to-b from-black/80 to-black border-void/50 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
+                                                            : "bg-black/80 border-white/5 text-midnight-800"
                                                     )}
                                                 >
                                                     {isUnlocked && <div className="absolute inset-x-0 top-0 h-0.5 bg-void-light"></div>}
@@ -209,7 +209,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                     </div>
                                 </td>
 
-                                <td className="p-5 bg-midnight-950/20 border-y border-midnight-800/50 group-hover:bg-midnight-800/40 transition-colors">
+                                <td className="p-5 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="flex gap-2">
                                             {[
@@ -217,7 +217,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                                 { label: '6-9', range: [6, 9], color: 'text-midnight-300' },
                                                 { label: '10-12', range: [10, 12], color: 'text-void-light' },
                                             ].map(r => (
-                                                <div key={r.label} className="flex flex-col items-center p-2 bg-midnight-900/60 border border-midnight-800 rounded-xl min-w-[45px] transition-colors group-hover:border-midnight-700">
+                                                <div key={r.label} className="flex flex-col items-center p-2 bg-black/60 border border-white/5 rounded-xl min-w-[45px] transition-colors group-hover:border-white/10">
                                                     <span className="text-[8px] text-midnight-600 uppercase font-black mb-1">{r.label}</span>
                                                     <span className={clsx("text-sm font-black", r.color)}>
                                                         {Object.entries(displayHistory).reduce((acc, [l, c]) => (parseInt(l) >= r.range[0] && parseInt(l) <= r.range[1] ? acc + c : acc), 0) || '-'}
@@ -238,7 +238,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                     </div>
                                 </td>
 
-                                <td className="p-5 text-center bg-midnight-950/20 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-midnight-800/50 group-hover:bg-midnight-800/40 transition-colors">
+                                <td className="p-5 text-center bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
                                     {(() => {
                                         const statusStyles = {
                                             complete: "bg-green-500/10 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(72,222,128,0.15)]",

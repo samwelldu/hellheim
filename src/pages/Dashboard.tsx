@@ -316,15 +316,15 @@ export const Dashboard: React.FC = () => {
                         <button
                             onClick={() => setShowSettings(!showSettings)}
                             className={clsx(
-                                "px-4 py-2 border rounded-xl backdrop-blur-sm flex items-center gap-2 transition-all",
-                                showSettings ? "bg-void/20 border-void/50 text-white" : "bg-midnight-800/50 border-midnight-700 text-midnight-400 hover:text-white"
+                                "px-4 py-2 border rounded-xl glass flex items-center gap-2 transition-all",
+                                showSettings ? "bg-void/40 border-void/50 text-white" : "text-midnight-400 hover:text-white"
                             )}
                         >
                             <Settings2 size={16} />
                             <span className="text-xs font-bold uppercase tracking-wider">Temporada</span>
                         </button>
                     )}
-                    <div className="px-4 py-2 bg-midnight-800/50 border border-midnight-700 rounded-xl backdrop-blur-sm flex items-center gap-2">
+                    <div className="px-4 py-2 glass rounded-xl flex items-center gap-2">
                         <Calendar size={14} className="text-void-light" />
                         <span className="text-xs font-bold text-white uppercase tracking-wider">
                             Semana {currentWeekRel}
@@ -407,7 +407,7 @@ export const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Main Stats */}
                 <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-midnight-800/40 border border-midnight-700 p-6 rounded-3xl relative overflow-hidden group">
+                    <div className="glass p-6 rounded-3xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                             <Zap size={120} />
                         </div>
@@ -427,7 +427,7 @@ export const Dashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="bg-midnight-800/40 border border-midnight-700 p-6 rounded-3xl">
+                    <div className="glass p-6 rounded-3xl">
                         <p className="text-midnight-400 text-xs font-black uppercase tracking-[0.2em] mb-4">Tendencia Semanal (Oro)</p>
                         <div className="flex items-end justify-between h-24 gap-2">
                             {weeklyTrend.map((w) => {
@@ -452,7 +452,7 @@ export const Dashboard: React.FC = () => {
                 {/* Sub Stats Cards */}
                 <div className="space-y-4">
                     <div className={clsx(
-                        "bg-midnight-900/50 border border-midnight-700 p-4 rounded-2xl flex items-center justify-between hover:border-void-light/30 transition-colors relative transition-opacity",
+                        "glass p-4 rounded-2xl flex items-center justify-between hover:border-void-light/30 transition-colors relative transition-opacity",
                         !(season.modules.attendance.active && currentWeekRel >= season.modules.attendance.startWeek) && "opacity-40 grayscale"
                     )}>
                         <div className="flex items-center gap-4">
@@ -468,7 +468,7 @@ export const Dashboard: React.FC = () => {
                         }
                     </div>
                     <div className={clsx(
-                        "bg-midnight-900/50 border border-midnight-700 p-4 rounded-2xl flex items-center justify-between hover:border-accent-cyan/30 transition-colors relative transition-opacity",
+                        "glass p-4 rounded-2xl flex items-center justify-between hover:border-accent-cyan/30 transition-colors relative transition-opacity",
                         !(season.modules.mythicPlus.active && currentWeekRel >= season.modules.mythicPlus.startWeek) && "opacity-40 grayscale"
                     )}>
                         <div className="flex items-center gap-4">
@@ -484,7 +484,7 @@ export const Dashboard: React.FC = () => {
                         }
                     </div>
                     <div className={clsx(
-                        "bg-midnight-900/50 border border-midnight-700 p-4 rounded-2xl flex items-center justify-between hover:border-yellow-500/30 transition-colors relative transition-opacity",
+                        "glass p-4 rounded-2xl flex items-center justify-between hover:border-yellow-500/30 transition-colors relative transition-opacity",
                         !(season.modules.quota.active && currentWeekRel >= season.modules.quota.startWeek) && "opacity-40 grayscale"
                     )}>
                         <div className="flex items-center gap-4">
@@ -503,8 +503,8 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Performance Heatmap Table */}
-            <div className="bg-midnight-800/40 rounded-3xl border border-midnight-700 overflow-hidden backdrop-blur-sm shadow-2xl">
-                <div className="p-6 border-b border-midnight-700/50 flex justify-between items-center bg-midnight-900/30">
+            <div className="glass rounded-3xl overflow-hidden shadow-2xl">
+                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-black/40">
                     <div>
                         <h3 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-2">
                             Matriz de Rendimiento
@@ -517,7 +517,7 @@ export const Dashboard: React.FC = () => {
                             { color: 'bg-yellow-500', label: 'Parcial' },
                             { color: 'bg-red-500', label: 'Faltante' }
                         ].map((item) => (
-                            <div key={item.label} className="flex items-center gap-2 bg-midnight-900/50 px-3 py-1.5 rounded-lg border border-midnight-700">
+                            <div key={item.label} className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5">
                                 <div className={clsx("w-2 h-2 rounded-full", item.color)}></div>
                                 <span className="text-[10px] font-bold text-midnight-300 uppercase">{item.label}</span>
                             </div>
@@ -528,8 +528,8 @@ export const Dashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="bg-midnight-900/50 text-[10px] font-black text-midnight-500 uppercase tracking-[0.2em]">
-                                <th className="p-5 text-left border-r border-midnight-700/30 sticky left-0 bg-midnight-900/50 z-10 text-white min-w-[200px]">Personaje</th>
+                            <tr className="bg-black/60 text-[10px] font-black text-midnight-500 uppercase tracking-[0.2em]">
+                                <th className="p-5 text-left border-r border-white/5 sticky left-0 bg-[#030105] z-10 text-white min-w-[200px]">Personaje</th>
                                 {Array.from({ length: 10 }).map((_, i) => {
                                     const weekNum = i + 1;
                                     return (
@@ -552,8 +552,8 @@ export const Dashboard: React.FC = () => {
                                 const charHistory = mythicHistory.filter(h => h.id.startsWith(player.name.toLowerCase()));
 
                                 return (
-                                    <tr key={player.name} className="hover:bg-void/5 transition-all duration-300 group">
-                                        <td className="p-5 border-r border-midnight-700/20 sticky left-0 bg-midnight-900/95 backdrop-blur-md z-10">
+                                    <tr key={player.name} className="hover:bg-white/5 transition-all duration-300 group">
+                                        <td className="p-5 border-r border-white/5 sticky left-0 bg-[#030105]/95 backdrop-blur-md z-10">
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     className="w-8 h-8 rounded-lg border flex items-center justify-center shrink-0"

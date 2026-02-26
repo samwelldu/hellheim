@@ -83,7 +83,7 @@ export const ApplicationsPage: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 relative">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 glass p-6 rounded-2xl relative z-10">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-void/10 rounded-2xl flex items-center justify-center border border-void/20 text-void-light">
                         <Users size={28} />
@@ -102,10 +102,10 @@ export const ApplicationsPage: React.FC = () => {
                             placeholder="Buscar personaje..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="bg-midnight-950/60 border border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:border-void/50 w-64 transition-all"
+                            className="bg-black/60 border border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-sm focus:outline-none focus:border-void/50 w-64 transition-all"
                         />
                     </div>
-                    <div className="flex bg-midnight-950/60 rounded-xl p-1 border border-white/5">
+                    <div className="flex bg-black/60 rounded-xl p-1 border border-white/5">
                         {['Todas', 'Pendiente', 'Revisando', 'Aceptado'].map(f => (
                             <button
                                 key={f}
@@ -129,7 +129,7 @@ export const ApplicationsPage: React.FC = () => {
                         key={app.id}
                         layoutId={app.id}
                         onClick={() => setSelectedApp(app)}
-                        className="bg-midnight-950/40 backdrop-blur-sm border border-white/5 rounded-3xl p-6 hover:border-void/50 transition-all cursor-pointer group relative overflow-hidden"
+                        className="glass p-6 group relative overflow-hidden"
                     >
                         <div className="flex items-start justify-between mb-6">
                             <div className="flex items-center gap-4">
@@ -161,7 +161,7 @@ export const ApplicationsPage: React.FC = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between p-3 bg-black/20 rounded-xl">
+                            <div className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5">
                                 <div className="flex items-center gap-2">
                                     <Zap size={12} className="text-void-light" />
                                     <span className="text-[10px] uppercase font-black text-midnight-500">Maestría</span>
@@ -212,7 +212,7 @@ export const ApplicationsPage: React.FC = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-midnight-950 border border-white/10 rounded-[48px] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+                            className="glass w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl relative"
                         >
                             <div className="p-10 border-b border-white/5 flex items-center justify-between shrink-0">
                                 <div className="flex items-center gap-6">
@@ -235,7 +235,7 @@ export const ApplicationsPage: React.FC = () => {
                                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-void-light flex items-center gap-2">
                                             <Target size={14} /> Objetivos en Midnight
                                         </h4>
-                                        <p className="text-midnight-300 leading-relaxed italic bg-black/20 p-6 rounded-3xl border border-white/5">
+                                        <p className="text-midnight-300 leading-relaxed italic bg-black/40 p-6 rounded-3xl border border-white/5">
                                             "{selectedApp.objectives}"
                                         </p>
                                     </div>
@@ -243,19 +243,19 @@ export const ApplicationsPage: React.FC = () => {
                                         <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-void-light flex items-center gap-2">
                                             <Shield size={14} /> Filosofía de Guild
                                         </h4>
-                                        <p className="text-midnight-300 leading-relaxed italic bg-black/20 p-6 rounded-3xl border border-white/5">
+                                        <p className="text-midnight-300 leading-relaxed italic bg-black/40 p-6 rounded-3xl border border-white/5">
                                             "{selectedApp.guildMeaning}"
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <div className="bg-black/20 p-6 rounded-3xl border border-white/5 flex flex-col items-center gap-2 text-center">
+                                    <div className="bg-black/40 p-6 rounded-3xl border border-white/5 flex flex-col items-center gap-2 text-center">
                                         <Clock size={20} className="text-midnight-500 mb-2" />
                                         <span className="text-[9px] font-black tracking-widest text-midnight-600 uppercase">Asistencia</span>
                                         <span className="font-black text-white uppercase">{selectedApp.isConstant}</span>
                                     </div>
-                                    <div className="bg-black/20 p-6 rounded-3xl border border-white/5 flex flex-col items-center gap-2 text-center">
+                                    <div className="bg-black/40 p-6 rounded-3xl border border-white/5 flex flex-col items-center gap-2 text-center">
                                         <Zap size={20} className="text-midnight-500 mb-2" />
                                         <span className="text-[9px] font-black tracking-widest text-midnight-600 uppercase">Battle Tag</span>
                                         <span className="font-black text-white">{selectedApp.battleTag}</span>

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
+import { cmsService } from '../services/cmsService';
+import { useEffect } from 'react';
 
 export const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -14,8 +16,18 @@ export const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [TanModoAdmin, setTanModoAdmin] = useState(false);
     const [region, setRegion] = useState<'us' | 'eu'>('us');
+    const [TanEslogan, setTanEslogan] = useState("Hermandad de la Sombra");
     const navigate = useNavigate();
     const { user, blizzardUser, loading } = useAuth();
+
+    useEffect(() => {
+        const unsubscribe = cmsService.subscribeToLanding((content) => {
+            if (content?.hero?.subtitle) {
+                setTanEslogan(content.hero.subtitle);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     if (loading) return null;
     if (user || blizzardUser) return <Navigate to="/dashboard" replace />;
@@ -45,14 +57,18 @@ export const Login: React.FC = () => {
             <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-accent-cyan/10 rounded-full blur-[120px]"></div>
 
             <div className="w-full max-w-md relative z-10 px-6">
-                <div className="text-center mb-12 space-y-4">
-                    <h1 className="text-6xl font-black text-white tracking-tighter uppercase italic select-none">
-                        Hell<span className="text-void-light">heim</span>
-                    </h1>
-                    <div className="flex items-center justify-center gap-2 text-midnight-500 font-bold uppercase tracking-[0.3em] text-[10px]">
-                        <div className="w-8 h-[1px] bg-midnight-800"></div>
-                        Hermandad de la Sombra
-                        <div className="w-8 h-[1px] bg-midnight-800"></div>
+                <div className="text-center mb-12 space-y-4 flex flex-col items-center">
+                    <Link to="/" className="inline-block group/logo cursor-pointer">
+                        <img
+                            src="/logo_hellheim_ice.png"
+                            alt="Hellheim Logo"
+                            className="w-48 h-auto object-contain transition-all duration-500 group-hover/logo:scale-105 drop-shadow-[0_0_20px_rgba(0,195,255,0.4)]"
+                        />
+                    </Link>
+                    <div className="flex items-center justify-center gap-2 text-midnight-500 font-bold uppercase tracking-[0.3em] text-[10px] text-center px-4">
+                        <div className="w-8 h-[1px] bg-midnight-800 shrink-0"></div>
+                        <span className="line-clamp-1">{TanEslogan}</span>
+                        <div className="w-8 h-[1px] bg-midnight-800 shrink-0"></div>
                     </div>
                 </div>
 
