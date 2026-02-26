@@ -187,7 +187,8 @@ export const mythicPlusService = {
                 level: profile.level || 0,
                 spec: profile.active_spec?.name || 'Unknown',
                 ilvl: profile.equipped_item_level || 0,
-                raidHistory: fullRaidHistory, // This remains direct
+                raidHistory: fullRaidHistory,
+                periodId: periodId || 0, // Tan: Guardamos el ID de periodo para el historial
             };
 
             const docId = customDocId || `${characterName.trim().toLowerCase()}-${realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
@@ -204,6 +205,7 @@ export const mythicPlusService = {
                     spec: profile.active_spec?.name || 'Unknown',
                     className: profile.character_class?.name || 'Unknown',
                     mplusScore: mplusProfile?.mythic_rating?.rating ? Math.round(mplusProfile.mythic_rating.rating) : '---',
+                    periodId: periodId || 0,
                     updatedAt: new Date()
                 },
                 lastBlizzardSync: Date.now(),
@@ -446,6 +448,14 @@ export const mythicPlusService = {
     // Tan: Publica todos los cambios pendientes al roster oficial
     async publishResults(): Promise<number> {
         const snapshot = await getDocs(collection(db, COLLECTION_NAME));
+
+        // Tan: Obtenemos metadatos globales para el cálculo de rendimiento
+        const raidQuotaDoc = await getDoc(doc(db, 'config', 'raid_quota'));
+        const raidQuotaAmount = raidQuotaDoc.exists() ? raidQuotaDoc.data().amount || 0 : 0;
+
+        const attendanceMetaDoc = await getDoc(doc(db, 'attendance_roster', 'metadata'));
+        const totalRaidsCount = attendanceMetaDoc.exists() ? attendanceMetaDoc.data().totalRaids || 0 : 0;
+
         let count = 0;
 
         for (const d of snapshot.docs) {
@@ -457,7 +467,6 @@ export const mythicPlusService = {
                 };
 
                 // Tan: Solo incluimos los campos si están definidos en pendingData
-                // Esto evita errores con registros pendientes antiguos que no tenían estos campos
                 if (char.pendingData.weeklyHistory !== undefined) updatedFields.weeklyHistory = char.pendingData.weeklyHistory;
                 if (char.pendingData.mythic0Count !== undefined) updatedFields.mythic0Count = char.pendingData.mythic0Count;
                 if (char.pendingData.raidProgress !== undefined) updatedFields.raidProgress = char.pendingData.raidProgress;
@@ -470,32 +479,30 @@ export const mythicPlusService = {
                 // Tan: Sobreescribimos en el roster de míticas
                 await setDoc(d.ref, updatedFields, { merge: true });
 
-                // Tan: Sincronización Cruzada con el Roster General (Attendance)
+                // Tan: Sincronización Cruzada con el Roster General (Attendance) e Identidad de Oro
                 let currentAttendance = 0;
                 let currentGold = 0;
 
                 try {
-                    const attendanceDocId = d.id;
-                    const attendanceRef = doc(db, 'attendance_roster', attendanceDocId);
+                    const attendanceRef = doc(db, 'attendance_roster', d.id);
                     const attSnap = await getDoc(attendanceRef);
 
                     if (attSnap.exists()) {
-                        currentAttendance = attSnap.data().attendedRaids || 0;
+                        const attData = attSnap.data();
+                        currentAttendance = attData.attendedRaids || 0;
                         const attUpdate: any = { updatedAt: new Date() };
                         if (char.pendingData.ilvl !== undefined) attUpdate.ilvl = char.pendingData.ilvl;
                         if (char.pendingData.level !== undefined) attUpdate.level = char.pendingData.level;
                         if (char.pendingData.className !== undefined) attUpdate.className = char.pendingData.className;
-
                         await setDoc(attendanceRef, attUpdate, { merge: true });
                     }
                 } catch (attError) {
                     console.error("Error sincronizando con asistencia:", attError);
                 }
 
-                // Tan: Consultar Oro actual
                 try {
-                    const quotaRef = doc(db, 'quote', d.id);
-                    const quotaSnap = await getDoc(quotaRef);
+                    const quoteRef = doc(db, 'quote', d.id);
+                    const quotaSnap = await getDoc(quoteRef);
                     if (quotaSnap.exists()) {
                         currentGold = quotaSnap.data().amount || 0;
                     }
@@ -507,21 +514,38 @@ export const mythicPlusService = {
                 if (char.periodId) {
                     const historyId = `${d.id}-${char.periodId}`;
 
-                    // Calculamos el color de rendimiento consolidado (Simple logic for now)
-                    // Tan: Esto se usará para pintar los cuadritos del Heatmap
-                    let perfColor = 'red';
-                    const hasMPlus = Object.keys(char.pendingData.weeklyHistory || {}).length > 0;
-                    const hasGold = currentGold > 0; // O comparar con cuota si estuviera disponible
+                    // Tan: Cálculo Estricto de Rendimiento Tripartito
+                    const attendPct = totalRaidsCount > 0 ? (currentAttendance / totalRaidsCount) * 100 : 0;
 
-                    if (hasMPlus && hasGold) perfColor = 'green';
-                    else if (hasMPlus || hasGold) perfColor = 'yellow';
+                    // Cálculo Míticas (Lógica de Slots)
+                    const history = char.pendingData.weeklyHistory || {};
+                    const runs: number[] = [];
+                    Object.entries(history).forEach(([level, count]) => {
+                        for (let i = 0; i < (count as number); i++) runs.push(parseInt(level));
+                    });
+                    const sortedRuns = runs.sort((a, b) => b - a);
+                    // Reglas (Podemos hardcodear o fetch, fetch es mejor pero usaremos defaults sensatos para el historial)
+                    const valSlot1 = sortedRuns.length >= 1 ? sortedRuns[0] : 0;
+                    const mplusPct = valSlot1 >= 2 ? 100 : 0; // Simplificado para el snapshot histórico o basado en 1 slot
+
+                    const quotaPct = raidQuotaAmount > 0
+                        ? (currentGold >= 0 ? 100 : Math.max(0, Math.round(100 + (currentGold / raidQuotaAmount * 100))))
+                        : 100;
+
+                    const globalPerf = Math.round((attendPct + mplusPct + quotaPct) / 3);
+
+                    let perfColor = 'red';
+                    if (globalPerf >= 80) perfColor = 'green';
+                    else if (globalPerf >= 50) perfColor = 'yellow';
 
                     await setDoc(doc(db, HISTORY_COLLECTION, historyId), {
                         ...char,
                         ...updatedFields,
                         attendanceCount: currentAttendance,
                         goldAmount: currentGold,
-                        performanceColor: perfColor, // 'green' | 'yellow' | 'red'
+                        globalPerf: globalPerf,
+                        performanceColor: perfColor,
+                        periodId: char.periodId || 0,
                         snapshotAt: new Date()
                     }, { merge: true });
                 }

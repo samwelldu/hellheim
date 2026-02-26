@@ -21,6 +21,7 @@ interface HistoryRecord {
     weeklyHistory: Record<string, number>;
     attendanceCount?: number;
     goldAmount?: number;
+    globalPerf?: number;
     snapshotAt: any;
 }
 
@@ -29,6 +30,7 @@ interface CharacterProfile {
     name: string;
     weeklyHistory: Record<string, number>;
     mythic0Count: number;
+    periodId?: number;
     pendingData?: any;
 }
 
@@ -191,7 +193,7 @@ export const Dashboard: React.FC = () => {
         ];
         const divisor = activeModules.filter(a => a).length || 1;
 
-        return actualPlayers.map(player => {
+        const players = actualPlayers.map(player => {
             // Tan: Priorizamos pendingData para que el Dashboard refleje el avance real (no solo el publicado)
             // Tan: Emparejamos por ID normalizado para evitar fallos por caracteres especiales o reinos
             const mplusBase = mythicData.find(m => m.id.toLowerCase() === player.id.toLowerCase() || m.name?.toLowerCase() === player.name?.toLowerCase());
@@ -228,7 +230,10 @@ export const Dashboard: React.FC = () => {
                 mplusPct = Math.min((validSlots / required) * 100, 100);
             }
 
-            let quotaPct = metadata.raidQuota > 0 ? Math.min((quota?.amount || 0) / metadata.raidQuota * 100, 100) : 100;
+            const currentGold = quota?.amount || 0;
+            let quotaPct = metadata.raidQuota > 0
+                ? (currentGold >= 0 ? 100 : Math.max(0, Math.round(100 + (currentGold / metadata.raidQuota * 100))))
+                : 100;
             if (!activeModules[2]) quotaPct = 0;
 
             const globalPerf = Math.round((
@@ -238,6 +243,7 @@ export const Dashboard: React.FC = () => {
             ) / divisor);
 
             return {
+                id: player.id,
                 name: player.name,
                 class: player.className,
                 attendPct: Math.round(attendPct),
@@ -246,8 +252,20 @@ export const Dashboard: React.FC = () => {
                 globalPerf: globalPerf,
                 activeModules
             };
-        }).sort((a, b) => b.globalPerf - a.globalPerf);
+        });
+
+        return players.sort((a, b) => b.globalPerf - a.globalPerf);
     }, [attendanceData, mythicData, quotaData, metadata, season, currentWeekRel]);
+
+    // Tan: Cálculo del periodo base para la matriz absoluta
+    const currentBlizzardPeriod = useMemo(() => {
+        return Math.max(...mythicData.map(m => m.periodId || 0), ...mythicHistory.map(h => h.periodId || 0));
+    }, [mythicData, mythicHistory]);
+
+    const startPeriodId = useMemo(() => {
+        if (currentBlizzardPeriod === 0) return 0;
+        return currentBlizzardPeriod - (currentWeekRel - 1);
+    }, [currentBlizzardPeriod, currentWeekRel]);
 
     // Global Stats
     const stats = useMemo(() => {
@@ -512,12 +530,13 @@ export const Dashboard: React.FC = () => {
                         <thead>
                             <tr className="bg-midnight-900/50 text-[10px] font-black text-midnight-500 uppercase tracking-[0.2em]">
                                 <th className="p-5 text-left border-r border-midnight-700/30 sticky left-0 bg-midnight-900/50 z-10 text-white min-w-[200px]">Personaje</th>
-                                {/* Tan: Generamos columnas para las últimas semanas */}
-                                {Array.from({ length: 6 }).map((_, i) => {
-                                    const weekNum = currentWeekRel - (5 - i);
-                                    if (weekNum <= 0) return null;
+                                {Array.from({ length: 10 }).map((_, i) => {
+                                    const weekNum = i + 1;
                                     return (
-                                        <th key={i} className="p-5 text-center border-r border-midnight-700/30 min-w-[80px]">
+                                        <th key={i} className={clsx(
+                                            "p-5 text-center border-r border-midnight-700/30 min-w-[80px]",
+                                            weekNum === currentWeekRel && "text-void-light bg-void/5"
+                                        )}>
                                             Sem {weekNum}
                                         </th>
                                     );
@@ -548,43 +567,49 @@ export const Dashboard: React.FC = () => {
                                             </div>
                                         </td>
 
-                                        {Array.from({ length: 6 }).map((_, i) => {
-                                            const weekOffset = 5 - i;
-                                            const isCurrentWeek = i === 5;
+                                        {Array.from({ length: 10 }).map((_, i) => {
+                                            const weekNum = i + 1;
+                                            const isCurrentWeek = weekNum === currentWeekRel;
+                                            const isFuture = weekNum > currentWeekRel;
 
-                                            // Tan: Estimamos el periodId buscando el máximo en el historial y restando
-                                            // Esto es más preciso que un índice simple
-                                            const currentPeriod = Math.max(...mythicHistory.map(h => h.periodId), 0);
-                                            const targetPeriod = currentPeriod - weekOffset;
-
-                                            // Buscamos si hay un registro para este personaje en esta semana
+                                            // Tan: Mapeo absoluto de PeriodId a Semana
+                                            const targetPeriod = startPeriodId > 0 ? startPeriodId + (weekNum - 1) : 0;
                                             const historyEntry = charHistory.find(h => h.periodId === targetPeriod);
 
-                                            let color = 'bg-midnight-800/20';
-                                            let tooltip = `Semana ${currentWeekRel - weekOffset}`;
+                                            let color = 'bg-midnight-800/10';
+                                            let tooltip = `Semana ${weekNum}`;
+                                            let value = 0;
 
                                             if (isCurrentWeek) {
-                                                color = player.globalPerf >= 80 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' :
-                                                    player.globalPerf >= 50 ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]' :
+                                                value = player.globalPerf;
+                                                color = value >= 80 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' :
+                                                    value >= 50 ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]' :
                                                         'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]';
-                                                tooltip += " (Actual) - Pendiente de Publicar";
+                                                tooltip += ` (Actual) - ${value}% de Rendimiento`;
                                             } else if (historyEntry) {
-                                                const hColor = historyEntry.performanceColor;
+                                                value = historyEntry.globalPerf || 0;
+                                                const hColor = historyEntry.performanceColor || (value >= 80 ? 'green' : value >= 50 ? 'yellow' : 'red');
                                                 color = hColor === 'green' ? 'bg-green-500/60' :
                                                     hColor === 'yellow' ? 'bg-yellow-500/60' : 'bg-red-500/60';
-                                                tooltip += ` - Estado: ${hColor === 'green' ? 'Efectivo' : hColor === 'yellow' ? 'Parcial' : 'Faltante'}`;
+                                                tooltip += ` - Objetivo: ${value}%`;
                                             }
 
                                             return (
-                                                <td key={i} className="p-2 border-r border-midnight-700/10 text-center">
+                                                <td key={i} className={clsx("p-2 border-r border-midnight-700/10 text-center", isCurrentWeek && "bg-void/5")}>
                                                     <div className="flex justify-center">
                                                         <div
                                                             className={clsx(
-                                                                "w-10 h-10 rounded-lg transition-all border border-black/20 shadow-inner group-hover:scale-110",
-                                                                color
+                                                                "w-10 h-10 rounded-lg transition-all border border-black/20 shadow-inner group-hover:scale-110 flex items-center justify-center",
+                                                                color,
+                                                                isFuture && "opacity-5 cursor-not-allowed",
+                                                                !isCurrentWeek && !historyEntry && !isFuture && "opacity-20"
                                                             )}
                                                             title={tooltip}
-                                                        ></div>
+                                                        >
+                                                            {(isCurrentWeek || historyEntry) && (
+                                                                <span className="text-[10px] font-black text-white/50">{value}%</span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                             );
