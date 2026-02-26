@@ -12,6 +12,7 @@ export interface AppUser {
     alias?: string;
     role: UserRole;
     createdAt: any;
+    updatedAt?: any; // Tan: Para rastrear el último personaje activo
     mainCharacter?: any;
     playerToken?: string;
 }

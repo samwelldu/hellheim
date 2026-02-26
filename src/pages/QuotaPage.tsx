@@ -44,43 +44,94 @@ export const QuotaPage: React.FC = () => {
                 isAdmin ? quotaService.getOrphanRecords() : Promise.resolve([])
             ]);
 
+            // Tan: Primero cargamos el mapa de alters y tokens para deducir dueños reales
+            const mappings = await quotaService.getCharacterMappings();
+            const charToTokenMap = new Map<string, string>();
+            mappings.forEach(m => charToTokenMap.set(m.id, m.playerToken));
+
             // Tan: Identificamos a los usuarios que ya tienen identidad vinculada
-            const linkedUsers = users.filter(u => u.mainCharacter && u.playerToken);
+            // y los deduplicamos ESTRICTAMENTE por el verdadero dueño (Cross-Reference)
+            const linkedUsersMap = new Map<string, any>();
+            users.forEach(u => {
+                if (u.mainCharacter && u.playerToken) {
+                    // Tan: Buscamos si el mainCharacter actual está mapeado a un token más reciente
+                    const charId = `${u.mainCharacter.name.toLowerCase().trim()}-${u.mainCharacter.realm?.toLowerCase() || 'ragnaros'}`;
+                    const realOwnerToken = charToTokenMap.get(charId) || u.playerToken;
+
+                    const existing = linkedUsersMap.get(realOwnerToken);
+
+                    const getTimestamp = (userItem: any) => {
+                        if (userItem.updatedAt) return typeof userItem.updatedAt === 'number' ? userItem.updatedAt : new Date(userItem.updatedAt).getTime();
+                        if (userItem.createdAt) return typeof userItem.createdAt === 'number' ? userItem.createdAt : new Date(userItem.createdAt).getTime();
+                        return 0;
+                    };
+
+                    const currentTime = getTimestamp(u);
+                    const existingTime = existing ? getTimestamp(existing) : -1;
+
+                    if (!existing || currentTime > existingTime) {
+                        // Forzamos que este usuario adopte su verdadero token para el resto del render
+                        u.playerToken = realOwnerToken;
+                        linkedUsersMap.set(realOwnerToken, u);
+                    }
+                }
+            });
+            const linkedUsers = Array.from(linkedUsersMap.values());
 
             // Creamos un mapa de balances actuales para búsqueda rápida
             const goldMap = new Map<string, any>(rankData.map(r => [r.id, r]));
 
             // Construimos el ranking unificado
             const unifiedRanking: any[] = [];
-            const linkedCharactersSet = new Set<string>(); // Para evitar meterlos como 'Legacy'
+            const processedTokens = new Set<string>(); // Registrar qué humanos dibujamos
 
-            // 1. Primero agregamos a todos los usuarios vinculados (tengan o no oro)
+            // 1. DIBUJAMOS LOS MAINS DE TODOS LOS HUMANOS (aunque tengan o no oro)
             linkedUsers.forEach(user => {
-                const goldRecord = goldMap.get(user.playerToken!);
+                const pToken = user.playerToken!;
+                const goldRecord = goldMap.get(pToken);
 
-                // Siempre los agregamos a la tabla (con oro o con 0)
+                // Si no tiene registro global, agregamos con 0
                 unifiedRanking.push({
-                    id: user.playerToken,
+                    id: pToken,
                     name: user.mainCharacter!.name,
                     amount: goldRecord ? goldRecord.amount : 0,
                     className: user.mainCharacter!.className,
                     isPlayerToken: true
                 });
 
-                // Marcar el personaje como vinculado para no repetirlo
-                linkedCharactersSet.add(user.mainCharacter!.name.toLowerCase());
+                // ANOTAMOS QUE ESTE HUMANO YA TIENE SU FILA
+                processedTokens.add(pToken);
 
-                // Borramos del mapa interno
+                // Como ya le dimos su oro al humano, sacamos este récord global
                 if (goldRecord) {
-                    goldMap.delete(user.playerToken!);
+                    goldMap.delete(pToken);
                 }
             });
 
-            // 2. Agregamos el resto de registros que tengan oro (Legacy o No-Usuarios)
+            // 2. AHORA REVISAMOS LAS MIGAJAS (ORO QUE QUEDÓ SUELTO O ALTERS SIN HUMANO REGISTRADO)
             goldMap.forEach((record) => {
-                // Si el registro de oro está a nombre de un personaje que YA mapeamos en el paso 1, lo ignoramos para no duplicar.
-                // (Esto soluciona el problema de que Dorow tenga 0g como User y Dorow tenga 1500g como Legacy)
-                if (linkedCharactersSet.has(record.name.toLowerCase())) return;
+                const legacyId = record.name.toLowerCase().trim().replace(/\\s+/g, '-');
+                const possibleRealmIds = [legacyId, `${legacyId}-ragnaros`, `${legacyId}-quelthalas`, `${legacyId}-drakkari`];
+
+                let ownerToken = null;
+                for (const pid of possibleRealmIds) {
+                    if (charToTokenMap.has(pid)) {
+                        ownerToken = charToTokenMap.get(pid);
+                        break;
+                    }
+                }
+
+                // Tan STRICT RULE: Si el oro le pertenece a un humano que YA TIENE FILA, 
+                // JAMÁS CREES OTRA FILA. El sistema de backend de quotas Service YA LE SUMÓ
+                // EL ORO EN EL PASO 1. Por ende esto es un remanente visual legacy que debe morir.
+                if (ownerToken && processedTokens.has(ownerToken)) {
+                    return; // Mátalo
+                }
+
+                // Regla Adicional: Si el registro se llama literalmente igual que un MAIN listado, Mátalo.
+                if (linkedUsers.some(u => u.mainCharacter!.name.toLowerCase() === record.name.toLowerCase())) {
+                    return; // Mátalo
+                }
 
                 const char = roster.find(c => c.name.toLowerCase() === record.name.toLowerCase());
                 unifiedRanking.push({

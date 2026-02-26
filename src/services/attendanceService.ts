@@ -107,6 +107,43 @@ export const attendanceService = {
         await deleteDoc(doc(db, COLLECTION_NAME, id));
     },
 
+    // Tan: Mueve el historial de asistencia al nuevo personaje
+    async TanTraspasarAsistencia(oldId: string, newChar: any): Promise<void> {
+        try {
+            const oldDocRef = doc(db, COLLECTION_NAME, oldId);
+            const oldSnap = await getDoc(oldDocRef);
+
+            if (!oldSnap.exists()) {
+                console.log(`[TanSystem] No hay historial de asistencia en ${oldId} para migrar.`);
+                return;
+            }
+
+            const oldData = oldSnap.data() as AttendanceProfile;
+            const newDocId = `${newChar.name.trim().toLowerCase()}-${newChar.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
+
+            if (oldId === newDocId) return;
+
+            console.log(`[TanSystem] Migrando historial de Asistencia: ${oldId} -> ${newDocId}`);
+
+            const newDocRef = doc(db, COLLECTION_NAME, newDocId);
+            await setDoc(newDocRef, {
+                ...oldData,
+                name: newChar.name,
+                realm: newChar.realm,
+                className: newChar.className,
+                classId: newChar.classId || 0,
+                level: newChar.level,
+                updatedAt: new Date(),
+                attendedRaids: oldData.attendedRaids || 0
+            }, { merge: true });
+
+            await deleteDoc(oldDocRef);
+            console.log(`[TanSystem] Migración de Asistencia completada.`);
+        } catch (error) {
+            console.error("[TanSystem] Error en migración de Asistencia:", error);
+        }
+    },
+
     /**
      * Batch update attendance for a list of character IDs
      */

@@ -188,18 +188,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         try {
+            // Tan: Gestión de Migración de Identidad (Evita duplicados)
+            const oldMain = mainCharacter;
+            const newDocId = `${charData.name.trim().toLowerCase()}-${charData.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
+
+            if (oldMain && (oldMain.name !== charData.name || oldMain.realm !== charData.realm)) {
+                const oldDocId = `${oldMain.name.trim().toLowerCase()}-${oldMain.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
+                console.log(`[TanSystem] Detectado cambio de Identidad: ${oldDocId} -> ${newDocId}`);
+
+                // Ejecutamos migraciones antes de establecer el nuevo main
+                await Promise.allSettled([
+                    mythicPlusService.TanTraspasarProgreso(oldDocId, charData),
+                    attendanceService.TanTraspasarAsistencia(oldDocId, charData)
+                ]);
+            }
+
+            // Tan: Actualización del documento de Usuario
             const userDocRef = doc(db, 'USERS', userId);
             await setDoc(userDocRef, {
                 mainCharacter: charData,
-                playerToken: playerToken, // Save playerToken to Firestore
+                playerToken: playerToken,
                 updatedAt: Date.now()
             }, { merge: true });
 
             setMainCharacter(charData);
 
-            // Tan: Registro unificado usando el ID natural del personaje (nombre-reino)
-            // Ya no usamos playerToken como ID del documento para evitar sobreescritura de alters
-            console.log(`[TanSystem] Vinculando progreso del main: ${charData.name}`);
+            // Tan: Sincronización final con Blizzard para asegurar datos frescos
+            console.log(`[TanSystem] Vinculando progreso del nuevo main: ${charData.name}`);
             await Promise.allSettled([
                 mythicPlusService.syncWithBlizzard(charData.name, charData.realm),
                 attendanceService.addCharacter(charData.name, charData.realm)

@@ -173,6 +173,17 @@ export const quotaService = {
     },
 
     /**
+     * Tan: Recupera el mapeo de identidades para saber a qué playerToken pertenece cada alter
+     */
+    async getCharacterMappings(): Promise<{ id: string; playerToken: string }[]> {
+        const snapshot = await getDocs(collection(db, 'character_mapping'));
+        return snapshot.docs.map(doc => ({
+            id: doc.id,
+            playerToken: doc.data().playerToken
+        }));
+    },
+
+    /**
      * Sets the global Raid Quota value.
      * @param amountGold Amount in GOLD. Converted to copper (x10000).
      */

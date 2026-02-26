@@ -12,7 +12,7 @@ import { useToast } from '../context/ToastContext';
 
 
 export const KeystonesPage: React.FC = () => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, mainCharacter } = useAuth();
     const { showToast } = useToast();
     const [characters, setCharacters] = useState<CharacterProfile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -290,6 +290,23 @@ export const KeystonesPage: React.FC = () => {
                                 )}
                             </>
                         )}
+                        {!isAdmin && mainCharacter && (
+                            <button
+                                onClick={() => {
+                                    const charId = `${mainCharacter.name.trim().toLowerCase()}-${mainCharacter.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
+                                    syncSingle({
+                                        id: charId,
+                                        name: mainCharacter.name,
+                                        realm: mainCharacter.realm
+                                    } as any);
+                                }}
+                                disabled={syncingIds.has(`${mainCharacter.name.trim().toLowerCase()}-${mainCharacter.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`)}
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-void hover:bg-void-dark text-white rounded-lg border border-void-light/30 transition-all font-black shadow-lg text-xs"
+                            >
+                                <RefreshCw size={14} className={syncingIds.has(`${mainCharacter.name.trim().toLowerCase()}-${mainCharacter.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`) ? "animate-spin" : ""} />
+                                {syncingIds.has(`${mainCharacter.name.trim().toLowerCase()}-${mainCharacter.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`) ? 'Sincronizando...' : 'Sincronizar Mi Personaje'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -308,6 +325,7 @@ export const KeystonesPage: React.FC = () => {
                 getCountHighKeys={mythicPlusService.getCountHighKeys}
                 onCharacterClick={(char) => setSelectedCharProfile(char)}
                 isHistoricalView={isHistoricalView}
+                mainCharacter={mainCharacter}
             />
 
             {/* Quick Armory Modal */}

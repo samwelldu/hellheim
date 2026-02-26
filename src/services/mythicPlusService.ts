@@ -278,12 +278,14 @@ export const mythicPlusService = {
                 // It just had "logic to count M0 runs".
                 // I will write a best-effort logic:
                 for (const expansion of dungeonsData.expansions || []) {
-                    // Tan: Buscamos en todas las expansiones porque la rotación puede incluir mazmorras antiguas
                     for (const instance of expansion.instances || []) {
                         for (const mode of instance.modes || []) {
-                            // Dificultad "Mythic" es la ID 23 (M0). 
-                            // Nota: _syncMythic0 es un extra, el core es M+ (Keystones)
-                            if (mode.difficulty.name === "Mythic" && mode.progress.completed_count > 0) {
+                            // Tan: Buscamos dificultad "Mythic" (ID 23 generalmente). 
+                            // Algunos registros pueden venir como "Mythic" o "Mítico".
+                            const isMythic0 = mode.difficulty.name.toLowerCase().includes('mythic') &&
+                                !mode.difficulty.name.toLowerCase().includes('keystone'); // Evitamos M+
+
+                            if (isMythic0 && mode.progress.completed_count > 0) {
                                 count += mode.progress.completed_count;
                             }
                         }
@@ -385,6 +387,45 @@ export const mythicPlusService = {
 
     async deleteCharacter(id: string): Promise<void> {
         await deleteDoc(doc(db, COLLECTION_NAME, id));
+    },
+
+    // Tan: Mueve el progreso de un personaje antiguo al nuevo para evitar duplicados
+    async TanTraspasarProgreso(oldId: string, newChar: any): Promise<void> {
+        try {
+            const oldDocRef = doc(db, COLLECTION_NAME, oldId);
+            const oldSnap = await getDoc(oldDocRef);
+
+            if (!oldSnap.exists()) {
+                console.log(`[TanSystem] No hay progreso previo en ${oldId} para migrar.`);
+                return;
+            }
+
+            const oldData = oldSnap.data() as CharacterProfile;
+            const newDocId = `${newChar.name.trim().toLowerCase()}-${newChar.realm.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-')}`;
+
+            if (oldId === newDocId) return;
+
+            console.log(`[TanSystem] Migrando progreso de Míticas: ${oldId} -> ${newDocId}`);
+
+            const newDocRef = doc(db, COLLECTION_NAME, newDocId);
+            // Conservamos datos clave del progreso
+            await setDoc(newDocRef, {
+                ...oldData,
+                name: newChar.name,
+                realm: newChar.realm,
+                className: newChar.className,
+                level: newChar.level,
+                updatedAt: new Date(),
+                // Aseguramos que los datos pendintes también se muevan
+                pendingData: oldData.pendingData || null
+            }, { merge: true });
+
+            // Borramos el rastro antiguo inmediatamente
+            await deleteDoc(oldDocRef);
+            console.log(`[TanSystem] Migración de Míticas completada y registro antiguo purgado.`);
+        } catch (error) {
+            console.error("[TanSystem] Error en migración de Míticas:", error);
+        }
     },
 
     async cleanupUnsynced(): Promise<number> {

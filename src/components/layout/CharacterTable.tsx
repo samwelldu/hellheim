@@ -20,6 +20,7 @@ interface CharacterTableProps {
     getCountHighKeys: (history: Record<string, number> | undefined) => string | number;
     onCharacterClick: (char: CharacterProfile) => void;
     isHistoricalView?: boolean;
+    mainCharacter?: any;
 }
 
 export const CharacterTable: React.FC<CharacterTableProps> = ({
@@ -34,7 +35,8 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
     getStatus,
     getCountHighKeys,
     onCharacterClick,
-    isHistoricalView = false
+    isHistoricalView = false,
+    mainCharacter
 }) => {
     const weeklyResetTime = getWeeklyReset();
     return (
@@ -62,9 +64,17 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
 
                         const isStale = !isHistoricalView && lastSync < weeklyResetTime;
 
-                        // Tan: Si los datos son Stale, para la vista semanal actual tratamos los contadores como 0
-                        const displayHistory = isStale ? {} : (char.weeklyHistory || {});
-                        const displayM0 = isStale ? 0 : (char.mythic0Count || 0);
+                        // Tan: Priorizamos datos sincronizados (Pending) sobre los publicados (Official) para que el jugador vea su avance real
+                        const currentData = (!isHistoricalView && char.pendingData) ? char.pendingData : char;
+
+                        const displayHistory = isStale ? {} : (currentData.weeklyHistory || {});
+                        const displayM0 = isStale ? 0 : (currentData.mythic0Count || 0);
+
+                        // Usamos los datos más recientes para el perfil visual
+                        const displayLevel = currentData.level || char.level;
+                        const displaySpec = currentData.spec || char.spec;
+                        const displayClass = currentData.className || char.className;
+                        const displayIlvl = currentData.ilvl || char.ilvl;
 
                         const topRuns = getTopRuns(displayHistory);
                         const vaultSlots = getVaultSlots(topRuns);
@@ -115,40 +125,50 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                                     </div>
                                                 )}
                                                 <span className="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">
-                                                    lvl {char.level}
+                                                    lvl {displayLevel}
                                                 </span>
                                             </div>
 
                                             <div className="text-[10px] text-midnight-500 uppercase tracking-widest font-black flex items-center gap-2 opacity-80">
-                                                <span>{char.spec} {char.className}</span>
+                                                <span>{displaySpec} {displayClass}</span>
                                                 <span className="text-midnight-800">•</span>
                                                 <span>{char.realm}</span>
                                             </div>
                                             <div className="text-xs font-black text-white flex items-center gap-2 mt-1">
                                                 <span className="text-[8px] uppercase tracking-[0.2em] text-midnight-600 font-black">Item Level</span>
-                                                <span className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">{char.ilvl}</span>
+                                                <span className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">{displayIlvl}</span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {isAdmin && (
-                                        <div className="flex items-center gap-3 mt-4 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); onSyncSingle(char); }}
-                                                disabled={isSyncing}
-                                                className="flex items-center gap-2 px-3 py-1 bg-midnight-800 border border-midnight-700 rounded-lg text-[10px] uppercase font-black tracking-wider text-void-light hover:bg-void hover:text-white transition-all shadow-lg"
-                                            >
-                                                <RefreshCw size={10} className={isSyncing ? "animate-spin" : ""} />
-                                                {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); onDeleteCharacter(char.id, char.name); }}
-                                                className="px-3 py-1 bg-midnight-800 border border-midnight-700 rounded-lg text-[10px] uppercase font-black tracking-wider text-red-500 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-lg"
-                                            >
-                                                Eliminar
-                                            </button>
-                                        </div>
-                                    )}
+                                    {(() => {
+                                        const isMyChar = mainCharacter &&
+                                            mainCharacter.name.toLowerCase() === char.name.toLowerCase() &&
+                                            mainCharacter.realm.toLowerCase() === char.realm.toLowerCase();
+
+                                        if (!isAdmin && !isMyChar) return null;
+
+                                        return (
+                                            <div className="flex items-center gap-3 mt-4 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); onSyncSingle(char); }}
+                                                    disabled={isSyncing}
+                                                    className="flex items-center gap-2 px-3 py-1 bg-midnight-800 border border-midnight-700 rounded-lg text-[10px] uppercase font-black tracking-wider text-void-light hover:bg-void hover:text-white transition-all shadow-lg"
+                                                >
+                                                    <RefreshCw size={10} className={isSyncing ? "animate-spin" : ""} />
+                                                    {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
+                                                </button>
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); onDeleteCharacter(char.id, char.name); }}
+                                                        className="px-3 py-1 bg-midnight-800 border border-midnight-700 rounded-lg text-[10px] uppercase font-black tracking-wider text-red-500 hover:bg-red-900/40 hover:border-red-500/50 transition-all shadow-lg"
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </td>
 
                                 <td className="p-5 text-center bg-midnight-950/20 border-y border-midnight-800/50 group-hover:bg-midnight-800/40 transition-colors">
