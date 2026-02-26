@@ -88,11 +88,11 @@ export const OnboardingPage: React.FC = () => {
         try {
             setUpdatingMain(true);
             await setMainCharacter({
-                name: confirmingMain.name,
-                realm: confirmingMain.realm.slug,
-                level: confirmingMain.level,
-                className: confirmingMain.playable_class.name,
-                id: confirmingMain.id
+                name: confirmingMain.name || 'Desconocido',
+                realm: confirmingMain.realm?.slug || 'unknown',
+                level: confirmingMain.level || 0,
+                className: confirmingMain.playable_class?.name || 'Unknown',
+                id: confirmingMain.id || Date.now()
             });
             // Una vez seleccionado, el useEffect de arriba redirigirá al Dashboard
         } catch (err) {
@@ -180,7 +180,8 @@ export const OnboardingPage: React.FC = () => {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {characters.map((char, index) => {
-                                const classColor = CLASS_COLORS[char.playable_class.name] || '#ffffff';
+                                const classNameStr = char.playable_class?.name || 'Unknown';
+                                const classColor = CLASS_COLORS[classNameStr] || '#ffffff';
                                 return (
                                     <motion.button
                                         key={char.id}
@@ -194,12 +195,12 @@ export const OnboardingPage: React.FC = () => {
 
                                         <div className="space-y-4">
                                             <div className="flex justify-between items-start">
-                                                <span className="text-[10px] font-black text-midnight-500 uppercase tracking-widest">LVL {char.level}</span>
+                                                <span className="text-[10px] font-black text-midnight-500 uppercase tracking-widest">LVL {char.level || 0}</span>
                                                 <Globe size={14} className="text-midnight-700" />
                                             </div>
                                             <div>
-                                                <h3 className="text-xl font-black uppercase tracking-tight truncate" style={{ color: classColor }}>{char.name}</h3>
-                                                <p className="text-[9px] font-black text-midnight-400 uppercase tracking-widest leading-none mt-1">{char.realm.name}</p>
+                                                <h3 className="text-xl font-black uppercase tracking-tight truncate" style={{ color: classColor }}>{char.name || 'Desconocido'}</h3>
+                                                <p className="text-[9px] font-black text-midnight-400 uppercase tracking-widest leading-none mt-1">{char.realm?.name || 'Desconocido'}</p>
                                             </div>
                                             <div className="pt-4 flex items-center justify-between border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <span className="text-[9px] font-black text-white uppercase tracking-tighter">Vincular Main</span>

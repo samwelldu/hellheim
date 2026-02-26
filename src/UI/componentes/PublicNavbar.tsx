@@ -23,6 +23,17 @@ export const PublicNavbar: React.FC = () => {
         { name: 'Postular', path: '/apply' },
     ];
 
+    const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string | undefined) => {
+        if (href && href.startsWith('#')) {
+            e.preventDefault();
+            const targetId = href.replace('#', '');
+            const elem = document.getElementById(targetId);
+            if (elem) {
+                elem.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    };
+
     return (
         <nav className={clsx(
             "fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-6 lg:px-12",
@@ -53,7 +64,8 @@ export const PublicNavbar: React.FC = () => {
                             <a
                                 key={link.name}
                                 href={link.href}
-                                className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 hover:text-white transition-colors"
+                                onClick={(e) => handleScrollTo(e, link.href)}
+                                className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60 hover:text-white transition-colors cursor-pointer"
                             >
                                 {link.name}
                             </a>
@@ -104,8 +116,11 @@ export const PublicNavbar: React.FC = () => {
                                     <a
                                         key={link.name}
                                         href={link.href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="text-xs font-black uppercase tracking-widest text-white/60"
+                                        onClick={(e) => {
+                                            handleScrollTo(e, link.href);
+                                            setMobileMenuOpen(false);
+                                        }}
+                                        className="text-xs font-black uppercase tracking-widest text-white/60 cursor-pointer"
                                     >
                                         {link.name}
                                     </a>
