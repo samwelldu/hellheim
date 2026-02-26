@@ -53,7 +53,11 @@ export const OnboardingPage: React.FC = () => {
         }
 
         const loadCharacters = async () => {
-            if (!blizzardUser?.token) return;
+            if (!blizzardUser?.token) {
+                setLoading(false);
+                setError("Debes iniciar sesión con Blizzard para registrar tu identidad.");
+                return;
+            }
 
             try {
                 setLoading(true);

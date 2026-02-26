@@ -8,7 +8,7 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, skipOnboardingCheck = false }) => {
-    const { user, blizzardUser, mainCharacter, loading } = useAuth();
+    const { user, blizzardUser, mainCharacter, isAdmin, loading } = useAuth();
 
     if (loading) return null; // Tan: Evitamos parpadeos mientras cargamos
 
@@ -17,7 +17,8 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, skipOnboar
     }
 
     // Tan: Vínculo obligatorio de Personaje Principal (Onboarding)
-    if (!skipOnboardingCheck && !mainCharacter) {
+    // Los Administradores fundadores pueden acceder sin identidad vinculada para gestionar la plataforma
+    if (!skipOnboardingCheck && !mainCharacter && !isAdmin) {
         return <Navigate to="/onboarding" replace />;
     }
 
