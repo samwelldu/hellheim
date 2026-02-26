@@ -160,7 +160,7 @@ export const PerfilPage: React.FC = () => {
     return (
         <div className="space-y-10 animate-fade-in pb-20 max-w-7xl mx-auto">
             {/* Header de Perfil */}
-            <div className="relative p-8 md:p-12 rounded-[40px] overflow-hidden border border-white/5 bg-midnight-900/40 backdrop-blur-3xl shadow-2xl">
+            <div className="relative p-8 md:p-12 rounded-[40px] overflow-hidden border border-white/5 glass shadow-2xl">
                 <div className="absolute top-0 right-0 p-8 opacity-5">
                     <Shield size={240} className="text-[#00c3ff]" />
                 </div>
@@ -201,7 +201,7 @@ export const PerfilPage: React.FC = () => {
                         <section key={realm} className="space-y-3">
                             <button
                                 onClick={() => toggleRealm(realm)}
-                                className="w-full flex items-center justify-between gap-4 px-6 py-3 bg-midnight-900/10 border border-white/5 rounded-2xl hover:bg-midnight-800/20 transition-all group"
+                                className="w-full flex items-center justify-between gap-4 px-6 py-3 bg-black/60 border border-white/5 rounded-2xl hover:bg-black/80 transition-all group"
                             >
                                 <div className="flex items-center gap-3">
                                     <Globe size={14} className="text-[#00c3ff]/60 group-hover:text-[#00c3ff] transition-colors" />
@@ -229,8 +229,8 @@ export const PerfilPage: React.FC = () => {
                                                         key={char.id}
                                                         layout
                                                         className={clsx(
-                                                            "group relative p-4 bg-midnight-950/40 border rounded-2xl transition-all shadow-lg overflow-hidden flex flex-col justify-between h-28",
-                                                            isMain ? "border-void-light/40 bg-void/5 shadow-[0_0_20px_rgba(168,85,247,0.1)]" : "border-midnight-800/40 hover:border-white/10"
+                                                            "group relative p-4 glass border rounded-2xl transition-all shadow-lg overflow-hidden flex flex-col justify-between h-28",
+                                                            isMain ? "border-void-light/40 shadow-[0_0_20px_rgba(168,85,247,0.1)]" : "border-white/5 hover:border-white/10"
                                                         )}
                                                     >
                                                         {/* Acento lateral */}
@@ -304,7 +304,7 @@ export const PerfilPage: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="w-full max-w-sm bg-midnight-900 border border-white/10 p-10 rounded-[40px] shadow-2xl space-y-8 text-center"
+                            className="w-full max-w-sm glass border border-white/10 p-10 rounded-[40px] shadow-2xl space-y-8 text-center"
                         >
                             <div className="w-20 h-20 bg-void/20 text-void-light rounded-2xl flex items-center justify-center mx-auto border border-void-light/30 shadow-xl shadow-void/10">
                                 <Shield size={40} />
@@ -325,7 +325,7 @@ export const PerfilPage: React.FC = () => {
                                     </p>
                                 )}
 
-                                <div className="p-5 bg-midnight-950/80 rounded-3xl border border-white/5 space-y-2">
+                                <div className="p-5 bg-black/60 rounded-3xl border border-white/5 space-y-2">
                                     <div className="flex items-center justify-center gap-2 text-void-light">
                                         <AlertCircle size={14} />
                                         <span className="text-[10px] font-black uppercase tracking-widest">Aviso de Sincronización</span>
@@ -363,9 +363,9 @@ export const PerfilPage: React.FC = () => {
                             initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 50 }}
-                            className="w-full max-w-lg bg-midnight-950 border border-[#00c3ff]/20 p-1 rounded-[40px] shadow-[0_0_50px_rgba(0,195,255,0.1)] overflow-hidden"
+                            className="w-full max-w-lg glass border border-[#00c3ff]/20 p-1 rounded-[40px] shadow-[0_0_50px_rgba(0,195,255,0.1)] overflow-hidden"
                         >
-                            <div className="p-8 space-y-6 bg-midnight-900/40 rounded-[39px]">
+                            <div className="p-8 space-y-6 bg-black/40 rounded-[39px]">
                                 <div className="flex justify-between items-start">
                                     <div className="space-y-1">
                                         <p className="text-[#00c3ff] font-black uppercase tracking-[0.4em] text-[8px]">Protocolo V9 SCOUT</p>
@@ -430,7 +430,7 @@ export const PerfilPage: React.FC = () => {
 
             {characters.length === 0 && !loading && !error && (
                 <div className="flex flex-col gap-8 items-center">
-                    <div className="w-full text-center py-20 bg-midnight-950/20 rounded-[40px] border border-dashed border-midnight-800 space-y-6">
+                    <div className="w-full text-center py-20 glass rounded-[40px] border border-dashed border-white/10 space-y-6">
                         <p className="text-midnight-500 font-black uppercase tracking-widest text-xs">
                             No se encontraron personajes activos en esta región.
                         </p>
