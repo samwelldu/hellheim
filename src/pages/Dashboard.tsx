@@ -5,6 +5,7 @@ import { useCollection } from '../hooks/useCollection';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getClassColor } from '../utils/wowClasses';
+import { useAuth } from '../context/AuthContext';
 
 interface AttendanceProfile {
     id: string;
@@ -53,6 +54,7 @@ interface SeasonSettings {
 }
 
 export const Dashboard: React.FC = () => {
+    const { isAdmin } = useAuth();
     // Data fetching
     const { data: attendanceData, loading: loadingAttendance } = useCollection<AttendanceProfile>('attendance_roster');
     const { data: mythicData, loading: loadingMythic } = useCollection<CharacterProfile>('mythic_progress');
@@ -287,16 +289,18 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                    <button
-                        onClick={() => setShowSettings(!showSettings)}
-                        className={clsx(
-                            "px-4 py-2 border rounded-xl backdrop-blur-sm flex items-center gap-2 transition-all",
-                            showSettings ? "bg-void/20 border-void/50 text-white" : "bg-midnight-800/50 border-midnight-700 text-midnight-400 hover:text-white"
-                        )}
-                    >
-                        <Settings2 size={16} />
-                        <span className="text-xs font-bold uppercase tracking-wider">Temporada</span>
-                    </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setShowSettings(!showSettings)}
+                            className={clsx(
+                                "px-4 py-2 border rounded-xl backdrop-blur-sm flex items-center gap-2 transition-all",
+                                showSettings ? "bg-void/20 border-void/50 text-white" : "bg-midnight-800/50 border-midnight-700 text-midnight-400 hover:text-white"
+                            )}
+                        >
+                            <Settings2 size={16} />
+                            <span className="text-xs font-bold uppercase tracking-wider">Temporada</span>
+                        </button>
+                    )}
                     <div className="px-4 py-2 bg-midnight-800/50 border border-midnight-700 rounded-xl backdrop-blur-sm flex items-center gap-2">
                         <Calendar size={14} className="text-void-light" />
                         <span className="text-xs font-bold text-white uppercase tracking-wider">

@@ -53,18 +53,20 @@ export const QuotaPage: React.FC = () => {
             // Construimos el ranking unificado
             const unifiedRanking: any[] = [];
 
-            // 1. Primero agregamos a todos los usuarios vinculados (hayan aportado o no)
+            // 1. Primero agregamos a los usuarios vinculados QUE TENGAN REGISTRO DE ORO
             linkedUsers.forEach(user => {
                 const goldRecord = goldMap.get(user.playerToken!);
-                unifiedRanking.push({
-                    id: user.playerToken,
-                    name: user.mainCharacter!.name,
-                    amount: goldRecord ? goldRecord.amount : 0,
-                    className: user.mainCharacter!.className,
-                    isPlayerToken: true
-                });
-                // Lo borramos del mapa para saber qué registros quedan (Legacy o No-Usuarios)
-                goldMap.delete(user.playerToken!);
+                if (goldRecord) {
+                    unifiedRanking.push({
+                        id: user.playerToken,
+                        name: user.mainCharacter!.name,
+                        amount: goldRecord.amount,
+                        className: user.mainCharacter!.className,
+                        isPlayerToken: true
+                    });
+                    // Lo borramos del mapa para saber qué registros quedan (Legacy o No-Usuarios)
+                    goldMap.delete(user.playerToken!);
+                }
             });
 
             // 2. Agregamos el resto de registros que tengan oro (Personajes no vinculados o Legacy)

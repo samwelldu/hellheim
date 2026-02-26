@@ -19,6 +19,25 @@ export const CLASS_COLORS: Record<WowClass, string> = {
     'Warrior': '#C79C6E'
 };
 
+const CLASS_ALIASES: Record<string, WowClass> = {
+    'Caballero de la Muerte': 'Death Knight',
+    'Cazador de demonios': 'Demon Hunter',
+    'Cazador de Demonios': 'Demon Hunter',
+    'Druida': 'Druid',
+    'Evocador': 'Evoker',
+    'Cazador': 'Hunter',
+    'Mago': 'Mage',
+    'Monje': 'Monk',
+    'Paladín': 'Paladin',
+    'Sacerdote': 'Priest',
+    'Pícaro': 'Rogue',
+    'Chamán': 'Shaman',
+    'Brujo': 'Warlock',
+    'Guerrero': 'Warrior',
+};
+
 export const getClassColor = (className: string): string => {
-    return CLASS_COLORS[className as WowClass] || '#FFFFFF'; // Default to white
+    // Tan: Normalizamos nombres de clase en inglés o español devueltos por la API de Blizzard en otros idiomas
+    const normalizedName = CLASS_ALIASES[className] || className;
+    return CLASS_COLORS[normalizedName as WowClass] || '#FFFFFF'; // Default to white
 };

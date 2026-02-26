@@ -29,7 +29,17 @@ export const attendanceService = {
             // Filter out metadata doc if it exists in the same collection (though usually best to keep separate or filter by ID)
             const characters = snapshot.docs
                 .filter(d => d.id !== METADATA_DOC_ID)
-                .map(doc => doc.data() as AttendanceProfile);
+                .map(doc => {
+                    const data = doc.data() as AttendanceProfile;
+                    // Asegurar que use el ID del documento
+                    return { ...data, id: doc.id };
+                })
+                .filter(char => {
+                    if (!char.name || !char.realm) return false;
+                    // Tan: Ocultar registros defectuosos de accounts IDs
+                    const expectedId = `${char.name.trim().toLowerCase()}-${char.realm.toLowerCase().replace(/'/g, '').replace(/\\s+/g, '-')}`;
+                    return char.id === expectedId;
+                });
 
             return characters.sort((a, b) => a.name.localeCompare(b.name));
         } catch (error) {

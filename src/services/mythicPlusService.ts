@@ -114,10 +114,19 @@ export const mythicPlusService = {
             return MOCK_DATA;
         }
 
-        return snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        } as CharacterProfile));
+        return snapshot.docs
+            .map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as CharacterProfile))
+            .filter(char => {
+                if (char.id === 'mock') return false;
+                if (!char.name || !char.realm) return false;
+                // Tan: Oculta visualmente cualquier ID de documento que no sea exactamente "nombre-reino"
+                // Esto esconde la basura residual de los viejos "dorow-1153"
+                const expectedId = `${char.name.trim().toLowerCase()}-${char.realm.toLowerCase().replace(/'/g, '').replace(/\\s+/g, '-')}`;
+                return char.id === expectedId;
+            });
     },
 
     async getRules(): Promise<MythicRules> {
@@ -174,6 +183,10 @@ export const mythicPlusService = {
                 race: profile.race?.name || 'Unknown',
                 faction: profile.faction?.name || 'Unknown',
                 gender: profile.gender?.name || 'Unknown',
+                className: profile.character_class?.name || 'Unknown',
+                level: profile.level || 0,
+                spec: profile.active_spec?.name || 'Unknown',
+                ilvl: profile.equipped_item_level || 0,
                 raidHistory: fullRaidHistory, // This remains direct
             };
 

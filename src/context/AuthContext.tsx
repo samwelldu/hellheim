@@ -197,12 +197,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setMainCharacter(charData);
 
-            // Tan: Registro unificado bajo PLAYER TOKEN
-            // Esto asegura que el jugador ocupe UN SOLO slot en el roster
-            console.log(`[TanSystem] Vinculando progreso al PlayerToken: ${playerToken}`);
+            // Tan: Registro unificado usando el ID natural del personaje (nombre-reino)
+            // Ya no usamos playerToken como ID del documento para evitar sobreescritura de alters
+            console.log(`[TanSystem] Vinculando progreso del main: ${charData.name}`);
             await Promise.allSettled([
-                mythicPlusService.syncWithBlizzard(charData.name, charData.realm, playerToken),
-                attendanceService.addCharacter(charData.name, charData.realm, playerToken)
+                mythicPlusService.syncWithBlizzard(charData.name, charData.realm),
+                attendanceService.addCharacter(charData.name, charData.realm)
             ]);
 
         } catch (error) {
@@ -211,8 +211,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    // Tan: Centralizamos la verificación de oficialía
-    const isAdmin = userRole === 'admin';
+    // Tan: Centralizamos la verificación de oficialía (Solo Firebase Auth puede ser Admin)
+    const isAdmin = !!user && userRole === 'admin';
 
     return (
         <AuthContext.Provider value={{
