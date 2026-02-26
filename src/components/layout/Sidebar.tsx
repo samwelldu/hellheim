@@ -10,7 +10,8 @@ import {
     LayoutDashboard,
     Coins,
     User,
-    Settings
+    Settings,
+    FileText
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,6 +28,7 @@ const navItems = [
     { name: 'Perfil', path: '/perfil', icon: User },
     { name: 'Postulaciones', path: '/applications', icon: Users },
     { name: 'Usuarios', path: '/users', icon: Shield },
+    { name: 'CMS', path: '/cms', icon: FileText },
     { name: 'Configuración', path: '/admin/config', icon: Settings },
 ];
 
