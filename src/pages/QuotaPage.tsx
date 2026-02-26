@@ -52,25 +52,36 @@ export const QuotaPage: React.FC = () => {
 
             // Construimos el ranking unificado
             const unifiedRanking: any[] = [];
+            const linkedCharactersSet = new Set<string>(); // Para evitar meterlos como 'Legacy'
 
-            // 1. Primero agregamos a los usuarios vinculados QUE TENGAN REGISTRO DE ORO
+            // 1. Primero agregamos a todos los usuarios vinculados (tengan o no oro)
             linkedUsers.forEach(user => {
                 const goldRecord = goldMap.get(user.playerToken!);
+
+                // Siempre los agregamos a la tabla (con oro o con 0)
+                unifiedRanking.push({
+                    id: user.playerToken,
+                    name: user.mainCharacter!.name,
+                    amount: goldRecord ? goldRecord.amount : 0,
+                    className: user.mainCharacter!.className,
+                    isPlayerToken: true
+                });
+
+                // Marcar el personaje como vinculado para no repetirlo
+                linkedCharactersSet.add(user.mainCharacter!.name.toLowerCase());
+
+                // Borramos del mapa interno
                 if (goldRecord) {
-                    unifiedRanking.push({
-                        id: user.playerToken,
-                        name: user.mainCharacter!.name,
-                        amount: goldRecord.amount,
-                        className: user.mainCharacter!.className,
-                        isPlayerToken: true
-                    });
-                    // Lo borramos del mapa para saber qué registros quedan (Legacy o No-Usuarios)
                     goldMap.delete(user.playerToken!);
                 }
             });
 
-            // 2. Agregamos el resto de registros que tengan oro (Personajes no vinculados o Legacy)
+            // 2. Agregamos el resto de registros que tengan oro (Legacy o No-Usuarios)
             goldMap.forEach((record) => {
+                // Si el registro de oro está a nombre de un personaje que YA mapeamos en el paso 1, lo ignoramos para no duplicar.
+                // (Esto soluciona el problema de que Dorow tenga 0g como User y Dorow tenga 1500g como Legacy)
+                if (linkedCharactersSet.has(record.name.toLowerCase())) return;
+
                 const char = roster.find(c => c.name.toLowerCase() === record.name.toLowerCase());
                 unifiedRanking.push({
                     ...record,
