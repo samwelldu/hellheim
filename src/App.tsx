@@ -16,6 +16,7 @@ import { AuthCallback } from './pages/AuthCallback';
 import { PerfilPage } from './pages/PerfilPage';
 import { ApplyPage } from './pages/ApplyPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
+import { AdminConfigPage } from './pages/AdminConfigPage';
 
 function App() {
   return (
@@ -97,6 +98,14 @@ function App() {
               <PrivateRoute>
                 <Layout>
                   <UsersPage />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            <Route path="/admin/config" element={
+              <PrivateRoute>
+                <Layout>
+                  <AdminConfigPage />
                 </Layout>
               </PrivateRoute>
             } />

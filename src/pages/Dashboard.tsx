@@ -29,6 +29,7 @@ interface CharacterProfile {
     name: string;
     weeklyHistory: Record<string, number>;
     mythic0Count: number;
+    pendingData?: any;
 }
 
 interface QuoteRecord {
@@ -191,8 +192,12 @@ export const Dashboard: React.FC = () => {
         const divisor = activeModules.filter(a => a).length || 1;
 
         return actualPlayers.map(player => {
-            const mplus = mythicData.find(m => m.name?.toLowerCase() === player.name?.toLowerCase());
-            const quota = quotaData.find(q => q.name?.toLowerCase() === player.name?.toLowerCase());
+            // Tan: Priorizamos pendingData para que el Dashboard refleje el avance real (no solo el publicado)
+            // Tan: Emparejamos por ID normalizado para evitar fallos por caracteres especiales o reinos
+            const mplusBase = mythicData.find(m => m.id.toLowerCase() === player.id.toLowerCase() || m.name?.toLowerCase() === player.name?.toLowerCase());
+            const mplus = mplusBase?.pendingData ? { ...mplusBase, ...mplusBase.pendingData } : mplusBase;
+
+            const quota = quotaData.find(q => q.id.toLowerCase() === player.id.toLowerCase() || (q.name && q.name.split('-')[0].toLowerCase() === player.name?.toLowerCase()));
 
             let attendPct = metadata.totalRaids > 0 ? (player.attendedRaids / metadata.totalRaids) * 100 : 0;
             if (!activeModules[0]) attendPct = 0;
@@ -203,7 +208,7 @@ export const Dashboard: React.FC = () => {
                 const history = mplus.weeklyHistory || {};
                 const runs: number[] = [];
                 Object.entries(history).forEach(([level, count]) => {
-                    for (let i = 0; i < count; i++) runs.push(parseInt(level));
+                    for (let i = 0; i < (count as number); i++) runs.push(parseInt(level));
                 });
                 const sortedRuns = runs.sort((a, b) => b - a);
 

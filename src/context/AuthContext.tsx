@@ -211,6 +211,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 updatedAt: Date.now()
             }, { merge: true });
 
+            // Tan: Sincronización de Nombre en Tesorería (Evita desvinculación en Dashboard)
+            if (playerToken) {
+                const quoteRef = doc(db, 'quote', playerToken);
+                await setDoc(quoteRef, {
+                    name: charData.name,
+                    lastUpdated: new Date()
+                }, { merge: true });
+            }
+
             setMainCharacter(charData);
 
             // Tan: Sincronización final con Blizzard para asegurar datos frescos

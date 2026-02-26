@@ -23,7 +23,8 @@ export const quotaService = {
                     const uploadRef = doc(db, UPLOADS_COLLECTION, record.hash);
 
                     // Tan: Resolución de Identidad (Personaje -> PlayerToken)
-                    const charMappingId = record.name.toLowerCase().trim().replace(/\s+/g, '-');
+                    // Aseguramos que la lógica de normalización de IDs sea consistente (eliminando apóstrofes)
+                    const charMappingId = record.name.toLowerCase().trim().replace(/'/g, '').replace(/\s+/g, '-');
                     const mappingSnap = await transaction.get(doc(db, 'character_mapping', charMappingId));
 
                     // Si encontramos un mapeo, usamos el playerToken, si no, el ID normalizado del personaje

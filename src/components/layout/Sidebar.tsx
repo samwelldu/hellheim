@@ -9,7 +9,8 @@ import {
     LogOut,
     LayoutDashboard,
     Coins,
-    User
+    User,
+    Settings
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +27,7 @@ const navItems = [
     { name: 'Perfil', path: '/perfil', icon: User },
     { name: 'Postulaciones', path: '/applications', icon: Users },
     { name: 'Usuarios', path: '/users', icon: Shield },
+    { name: 'Configuración', path: '/admin/config', icon: Settings },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -49,7 +51,7 @@ export const Sidebar: React.FC = () => {
 
     // Tan: Solo los oficiales ven herramientas avanzadas
     const TanMenuItems = navItems.filter(item => {
-        if (item.path === '/cms' || item.path === '/users' || item.path === '/applications') {
+        if (item.path === '/cms' || item.path === '/users' || item.path === '/applications' || item.path === '/admin/config') {
             return isAdmin;
         }
         return true;
