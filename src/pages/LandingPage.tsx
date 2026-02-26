@@ -4,6 +4,7 @@ import { Shield, Zap, Sword, Users, ArrowRight, ExternalLink, Calendar, Newspape
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { clsx } from 'clsx';
+import { useAuth } from '../context/AuthContext';
 import { cmsService, type LandingContent, type GuildNews } from '../services/cmsService';
 
 const B_ICON_MAP: Record<string, any> = {
@@ -26,6 +27,7 @@ export const LandingPage: React.FC = () => {
     const [wowheadNews, setWowheadNews] = useState<WoWHeadArticle[]>([]);
     const [TanNoticiaActiva, setTanNoticiaActiva] = useState<GuildNews | null>(null);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
     useEffect(() => {
         const unsubscribe = cmsService.subscribeToLanding((data) => {
@@ -91,8 +93,8 @@ export const LandingPage: React.FC = () => {
         <div className="bg-[#05020a] text-white min-h-screen font-sans selection:bg-void selection:text-white">
             {/* Navbar / Direct Access */}
             <nav className="absolute top-0 right-0 p-8 z-50">
-                <Link to="/login" className="px-6 py-2 bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 rounded-full text-xs font-black uppercase tracking-widest transition-all">
-                    Acceso Jugadores
+                <Link to={user ? "/dashboard" : "/login"} className="px-6 py-2 bg-white/10 hover:bg-white text-white hover:text-black border border-white/20 rounded-full text-xs font-black uppercase tracking-widest transition-all">
+                    {user ? "Perfil Jugador" : "Acceso Jugadores"}
                 </Link>
             </nav>
 
@@ -346,8 +348,8 @@ export const LandingPage: React.FC = () => {
                             <Link to="/apply" className="w-full sm:w-auto bg-white text-black font-black px-12 py-5 rounded-full hover:scale-105 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-3">
                                 <Users size={20} /> Aplicar Ahora
                             </Link>
-                            <Link to="/login" className="w-full sm:w-auto text-white/50 hover:text-white font-bold px-12 py-5 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2 group">
-                                Acceso Jugadores <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                            <Link to={user ? "/dashboard" : "/login"} className="w-full sm:w-auto text-white/50 hover:text-white font-bold px-12 py-5 transition-all text-sm uppercase tracking-widest flex items-center justify-center gap-2 group">
+                                {user ? "Perfil Jugador" : "Acceso Jugadores"} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
                     </div>

@@ -11,7 +11,8 @@ import {
     Coins,
     User,
     Settings,
-    FileText
+    FileText,
+    Home
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +21,7 @@ import { auth } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
+    { name: 'Página principal', path: '/', icon: Home },
     { name: 'General', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Míticas+ (M+)', path: '/mythicplus', icon: Shield },
     { name: 'Asistencia', path: '/attendance', icon: Users },

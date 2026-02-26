@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { Lock, Mail, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -14,6 +15,10 @@ export const Login: React.FC = () => {
     const [TanModoAdmin, setTanModoAdmin] = useState(false);
     const [region, setRegion] = useState<'us' | 'eu'>('us');
     const navigate = useNavigate();
+    const { user, blizzardUser, loading } = useAuth();
+
+    if (loading) return null;
+    if (user || blizzardUser) return <Navigate to="/dashboard" replace />;
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
