@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Users, ExternalLink, Shield, Search, UserPlus, Trash2, RefreshCw } from 'lucide-react';
+import { Users, ExternalLink, Shield, Search, Trash2, RefreshCw, MinusCircle } from 'lucide-react';
 import { getClassColor } from '../utils/wowClasses';
 
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { CharacterDetailModal } from '../components/common/CharacterDetailModal';
-import { Modal } from '../components/ui/Modal';
-
 import { attendanceService, type AttendanceProfile } from '../services/attendanceService';
 import { warcraftLogsService } from '../services/warcraftLogsService';
 
@@ -48,6 +45,8 @@ const AttendeesModal: React.FC<AttendeesModalProps> = ({ isOpen, onClose, attend
     );
 };
 
+
+
 export const AttendancePage: React.FC = () => {
     const { showToast } = useToast();
     const { userRole } = useAuth();
@@ -62,14 +61,7 @@ export const AttendancePage: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [wclUrl, setWclUrl] = useState('');
-    const [selectedChar, setSelectedChar] = useState<{ name: string; realm: string } | null>(null);
     const [attendeesModalData, setAttendeesModalData] = useState<string[] | null>(null);
-
-    // Add Character Modal
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newCharName, setNewCharName] = useState('');
-    const [newCharRealm, setNewCharRealm] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -92,22 +84,7 @@ export const AttendancePage: React.FC = () => {
         fetchData();
     }, []);
 
-    const handleAddCharacter = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsAdding(true);
-        try {
-            await attendanceService.addCharacter(newCharName, newCharRealm);
-            showToast(`${newCharName} agregado al roster correctamente.`, 'success');
-            setIsAddModalOpen(false);
-            setNewCharName('');
-            setNewCharRealm('');
-            fetchData();
-        } catch (error: any) {
-            showToast(error.message, 'error');
-        } finally {
-            setIsAdding(false);
-        }
-    };
+
 
     const handleDeleteCharacter = async (id: string, name: string) => {
         if (!confirm(`¿Estás seguro de eliminar a ${name} del roster de asistencia?`)) return;
@@ -322,15 +299,7 @@ export const AttendancePage: React.FC = () => {
                     </div>
                 </div>
 
-                {isAdmin && (
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="bg-void hover:bg-void-dark text-white px-4 py-2 rounded-lg font-bold shadow-lg shadow-void/20 transition-all flex items-center gap-2"
-                    >
-                        <UserPlus size={18} />
-                        <span className="hidden sm:inline">Agregar Personaje</span>
-                    </button>
-                )}
+
             </div>
 
             {/* Table */}
@@ -384,8 +353,11 @@ export const AttendancePage: React.FC = () => {
                                             className="hover:bg-void/5 transition-all duration-300 group"
                                         >
                                             <td
-                                                className="py-2 px-3 cursor-pointer relative overflow-hidden"
-                                                onClick={() => setSelectedChar({ name: member.name, realm: member.realm })}
+                                                className="py-2 px-3 cursor-pointer relative overflow-hidden group/name"
+                                                onClick={() => {
+                                                    const realm = member.realm.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+                                                    window.open(`https://worldofwarcraft.blizzard.com/es-mx/character/us/${realm}/${member.name.toLowerCase()}`, '_blank');
+                                                }}
                                             >
                                                 <div className="flex flex-col relative z-10">
                                                     <span className="font-black text-sm tracking-tight group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
@@ -424,17 +396,32 @@ export const AttendancePage: React.FC = () => {
                                                     </span>
                                                 </div>
                                             </td>
-                                            {isAdmin && (
-                                                <td className="py-2 px-3 text-center">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleDeleteCharacter(member.id, member.name); }}
-                                                        className="p-1.5 text-midnight-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                                                        title="Eliminar del roster"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                </td>
-                                            )}
+                                            {
+                                                isAdmin && (
+                                                    <td className="py-2 px-3 text-center flex items-center justify-center gap-1">
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                if (member.attendedRaids > 0) {
+                                                                    await attendanceService.subtractAttendance(member.id);
+                                                                    fetchData();
+                                                                }
+                                                            }}
+                                                            className="p-1.5 text-midnight-600 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-all"
+                                                            title="Restar 1 asistencia"
+                                                        >
+                                                            <MinusCircle size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteCharacter(member.id, member.name); }}
+                                                            className="p-1.5 text-midnight-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                                            title="Eliminar del roster"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </td>
+                                                )
+                                            }
                                         </tr>
                                     );
                                 })}
@@ -443,57 +430,11 @@ export const AttendancePage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Modals */}
-            <CharacterDetailModal
-                characterName={selectedChar?.name || ''}
-                realm={selectedChar?.realm || ''}
-                isOpen={!!selectedChar}
-                onClose={() => setSelectedChar(null)}
-            />
-
             <AttendeesModal
                 isOpen={!!attendeesModalData}
                 onClose={() => setAttendeesModalData(null)}
                 attendees={attendeesModalData || []}
             />
-
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Agregar Personaje al Roster">
-                <form onSubmit={handleAddCharacter} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-midnight-300 mb-1">Nombre del Personaje</label>
-                        <input
-                            type="text"
-                            value={newCharName}
-                            onChange={(e) => setNewCharName(e.target.value)}
-                            className="w-full bg-midnight-950 border border-midnight-700 rounded p-2 text-white focus:border-void-light focus:outline-none"
-                            placeholder="Ej: Sylvanas"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-midnight-300 mb-1">Reino (Slug)</label>
-                        <input
-                            type="text"
-                            value={newCharRealm}
-                            onChange={(e) => setNewCharRealm(e.target.value)}
-                            className="w-full bg-midnight-950 border border-midnight-700 rounded p-2 text-white focus:border-void-light focus:outline-none"
-                            placeholder="Ej: ragnaros"
-                            required
-                        />
-                    </div>
-                    <div className="flex justify-end gap-3 mt-6">
-                        <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-midnight-400 hover:text-white">Cancelar</button>
-                        <button
-                            type="submit"
-                            disabled={isAdding}
-                            className="px-6 py-2 bg-void hover:bg-void-dark text-white rounded font-bold shadow-lg flex items-center gap-2"
-                        >
-                            {isAdding && <RefreshCw size={16} className="animate-spin" />}
-                            {isAdding ? 'Verificando...' : 'Agregar'}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
         </div>
     );
 };

@@ -182,10 +182,36 @@ export const attendanceService = {
 
             batch.set(metaRef, { totalRaids: currentTotal + 1 }, { merge: true });
 
+            // Tan: 3. Inyectar lista de asistentes a "Colas de Cobro" para que QuotaService actúe
+            const pendingDiscountRef = doc(db, 'config', 'pending_raid_discount');
+            batch.set(pendingDiscountRef, {
+                attendeeIds: attendeeIds,
+                updatedAt: new Date()
+            });
+
             await batch.commit();
 
         } catch (error) {
             console.error("Error registering attendance:", error);
+            throw error;
+        }
+    },
+
+    /**
+     * Tan: Resta 1 asistencia a un personaje manualmente (Corrector de QA)
+     */
+    async subtractAttendance(id: string): Promise<void> {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            const snap = await getDoc(docRef);
+            if (!snap.exists()) return;
+            const data = snap.data() as AttendanceProfile;
+            const currentCount = data.attendedRaids || 0;
+            if (currentCount > 0) {
+                await setDoc(docRef, { attendedRaids: currentCount - 1 }, { merge: true });
+            }
+        } catch (error) {
+            console.error("Error subtracting attendance:", error);
             throw error;
         }
     },

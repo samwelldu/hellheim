@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, setDoc, getDocs, query, orderBy, runTransaction, where, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, getDocs, query, orderBy, runTransaction, where, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type { QuotaRecord } from '../utils/luaParser';
 
@@ -17,18 +17,27 @@ export const quotaService = {
         let uploaded = 0;
         let duplicates = 0;
 
+        // Tan: Pre-cargar catálogo de identidades para emparejamiento inteligente de alters (sin reino)
+        const mappingsSnap = await getDocs(collection(db, 'character_mapping'));
+        const identityMapList = mappingsSnap.docs.map(doc => ({
+            id: doc.id,
+            playerToken: doc.data().playerToken
+        }));
+
         for (const record of records) {
             try {
                 const result = await runTransaction(db, async (transaction) => {
                     const uploadRef = doc(db, UPLOADS_COLLECTION, record.hash);
 
-                    // Tan: Resolución de Identidad (Personaje -> PlayerToken)
-                    // Aseguramos que la lógica de normalización de IDs sea consistente (eliminando apóstrofes)
-                    const charMappingId = record.name.toLowerCase().trim().replace(/'/g, '').replace(/\s+/g, '-');
-                    const mappingSnap = await transaction.get(doc(db, 'character_mapping', charMappingId));
+                    // Tan: Resolución Inteligente (El AddOn no da el server, Firestore sí "nombre-reino")
+                    const simpleName = record.name.toLowerCase().trim().replace(/'/g, '').replace(/\s+/g, '-');
 
-                    // Si encontramos un mapeo, usamos el playerToken, si no, el ID normalizado del personaje
-                    const registryId = mappingSnap.exists() ? mappingSnap.data().playerToken : charMappingId;
+                    // Buscamos si existe alguna identidad que comience con ese nombre + un guión
+                    // Ej: "altersito" -> "altersito-quelthalas"
+                    const foundIdentity = identityMapList.find(m => m.id.startsWith(`${simpleName}-`) || m.id === simpleName);
+
+                    // Si encontramos un mapeo, usamos el playerToken, si no, el ID simple del personaje
+                    const registryId = foundIdentity ? foundIdentity.playerToken : simpleName;
                     const quoteRef = doc(db, QUOTES_COLLECTION, registryId);
 
                     // READS FIRST
@@ -41,7 +50,7 @@ export const quotaService = {
                     }
 
                     // Tan: Determinamos si es Huérfano
-                    const isOrphan = !mappingSnap.exists();
+                    const isOrphan = !foundIdentity;
 
                     // WRITES
                     const uploadData = uploadSnap.exists() ? uploadSnap.data() : { uploadedAt: new Date() };
@@ -206,36 +215,100 @@ export const quotaService = {
     },
 
     /**
-     * Applies the FULL discount to all users in the quote collection.
-     * Subtracts the current Raid Quota from every user's balance.
+     * Comprueba si hay registros de asistencia en cola listos para ser descontados.
+     */
+    async hasPendingRaidDiscount(): Promise<boolean> {
+        const pendingSnap = await getDoc(doc(db, 'config', 'pending_raid_discount'));
+        if (!pendingSnap.exists()) return false;
+        const attendeeIds = pendingSnap.data().attendeeIds;
+        return Array.isArray(attendeeIds) && attendeeIds.length > 0;
+    },
+
+    /**
+     * Tan: Recupera la lista de nombres de personajes que están en la cola de cobro.
+     */
+    async getPendingRaidAttendees(): Promise<string[]> {
+        const pendingSnap = await getDoc(doc(db, 'config', 'pending_raid_discount'));
+        if (!pendingSnap.exists()) return [];
+        return pendingSnap.data().attendeeIds || [];
+    },
+
+    /**
+     * Applies the FULL discount to users that attended the latest raid.
+     * Subtracts the current Raid Quota from every attendee's balance.
      */
     async applyRaidQuotaDiscount(): Promise<number> {
         const quotaAmount = await this.getRaidQuota();
         if (quotaAmount <= 0) return 0;
 
-        const q = query(collection(db, QUOTES_COLLECTION));
-        const snapshot = await getDocs(q);
-        let processed = 0;
+        // Tan: 1. Leer los asistentes pendientes de cobro
+        const pendingDiscountRef = doc(db, 'config', 'pending_raid_discount');
+        const pendingSnap = await getDoc(pendingDiscountRef);
 
+        if (!pendingSnap.exists() || !pendingSnap.data().attendeeIds || pendingSnap.data().attendeeIds.length === 0) {
+            throw new Error("No hay registros de Asistencia pendientes de descontar.");
+        }
+
+        const attendeeIds: string[] = pendingSnap.data().attendeeIds;
+
+        // Tan: 2. Resolver playerTokens (un token puede tener múltiples alters que asistieron o solo el main)
+        const mappingsSnap = await getDocs(collection(db, 'character_mapping'));
+        const identityMapList = mappingsSnap.docs.map(d => ({
+            id: d.id,
+            playerToken: d.data().playerToken
+        }));
+
+        // Usamos un Set para no cobrarle doble la cuota a la misma persona si fue con dos personajes a la misma raid (raro, pero posible en splits)
+        const tokensToCharge = new Set<string>();
+
+        attendeeIds.forEach(charId => {
+            const foundIdentity = identityMapList.find(m => m.id === charId.toLowerCase().trim());
+            if (foundIdentity && foundIdentity.playerToken) {
+                tokensToCharge.add(foundIdentity.playerToken);
+            } else {
+                // Si no tiene token mapeado, se le cobra directamente al ID crudo (caso legacy)
+                tokensToCharge.add(charId);
+            }
+        });
+
+        const targetsArray = Array.from(tokensToCharge);
+        if (targetsArray.length === 0) return 0;
+
+        // Tan: 3. Aplicar descuentos por lotes
+        let processed = 0;
         const chunks = [];
-        const docs = snapshot.docs;
-        for (let i = 0; i < docs.length; i += 500) {
-            chunks.push(docs.slice(i, i + 500));
+        for (let i = 0; i < targetsArray.length; i += 500) {
+            chunks.push(targetsArray.slice(i, i + 500));
         }
 
         for (const chunk of chunks) {
             await runTransaction(db, async (transaction) => {
-                for (const userDoc of chunk) {
-                    const currentAmount = userDoc.data().amount || 0;
-                    const newAmount = currentAmount - quotaAmount;
-                    transaction.update(userDoc.ref, {
-                        amount: newAmount,
-                        lastUpdated: new Date()
-                    });
+                for (const tokenId of chunk) {
+                    const userRef = doc(db, QUOTES_COLLECTION, tokenId);
+                    const userSnap = await transaction.get(userRef);
+
+                    if (userSnap.exists()) {
+                        const currentAmount = userSnap.data().amount || 0;
+                        const newAmount = currentAmount - quotaAmount;
+                        transaction.update(userRef, {
+                            amount: newAmount,
+                            lastUpdated: new Date()
+                        });
+                    } else {
+                        // Si el usuario no existe en la tesorería, le creamos la deuda inicial en negativo
+                        transaction.set(userRef, {
+                            name: tokenId,
+                            amount: -quotaAmount,
+                            lastUpdated: new Date()
+                        });
+                    }
                 }
             });
             processed += chunk.length;
         }
+
+        // Tan: 4. Eliminar el borrador de cobro para evitar doble descuento accidental
+        await deleteDoc(pendingDiscountRef);
 
         return processed;
     },

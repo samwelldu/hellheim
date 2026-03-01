@@ -113,8 +113,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUserRole('member'); // Fallback to member
                 }
             } else if (blizzardUser) {
-                // Tan: Si es usuario de Blizzard, es miembro de la hermandad
-                setUserRole('member');
+                // Tan: Si es usuario de Blizzard, cargamos su rol real desde la BD
+                try {
+                    const uidDocRef = doc(db, 'USERS', blizzardUser.id);
+                    const userDoc = await getDoc(uidDocRef);
+                    if (userDoc.exists()) {
+                        const existingData = userDoc.data();
+                        setUserRole(existingData.role || 'member');
+                        setMainCharacter(existingData.mainCharacter || null);
+                    } else {
+                        setUserRole('member');
+                    }
+                } catch (error) {
+                    console.error('Error loading blizzard user role:', error);
+                    setUserRole('member');
+                }
             } else {
                 setUserRole(null);
             }
@@ -249,9 +262,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    // Tan: Centralizamos la verificación de oficialía (Solo Firebase Auth puede administrar)
+    // Tan: Centralizamos la verificación de oficialía (Firebase Auth y Blizzard pueden administrar)
     // Se acepta 'admin', 'supervisor', o variaciones de capitalización.
-    const isAdmin = !!user && (
+    const isAdmin = (!!user || !!blizzardUser) && (
         userRole?.toLowerCase() === 'admin' ||
         userRole?.toLowerCase() === 'supervisor' ||
         userRole?.toLowerCase() === 'oficial' ||

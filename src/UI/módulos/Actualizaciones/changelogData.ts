@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        id: "v1.2.0",
+        version: "v1.2.0",
+        date: "01/03/2026",
+        title: "Actualización: Automatización y Seguridad de Roster",
+        changes: [
+            "Adición de módulo \"Actualizaciones\"",
+            "Fix: Sincronización de usuarios en módulo Usuarios de administradores",
+            "Fix: Entrega de roles a usuarios de BattleTag",
+            "Fix: Módulo \"Cuota\" -> Se soluciona el mapeo de personajes entre si.",
+            "Fix: Módulo \"Cuota\" -> Ahora espera la asistencia para activar el descuento y muestra a quienes lo realizará.",
+            "Se quita el botón \"Añadir personaje\" de todos los módulos, para generar automatización del sistema"
+        ]
+    },
+    {
         id: "v1.1.0",
         version: "v1.1.0",
         date: "01/03/2026",

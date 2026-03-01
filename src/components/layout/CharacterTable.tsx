@@ -18,7 +18,6 @@ interface CharacterTableProps {
     getVaultSlots: (runs: number[]) => number[];
     getStatus: (vaultSlots: number[], currentRules: MythicRules) => { status: string; label: string; color: string };
     getCountHighKeys: (history: Record<string, number> | undefined) => string | number;
-    onCharacterClick: (char: CharacterProfile) => void;
     isHistoricalView?: boolean;
     mainCharacter?: any;
 }
@@ -34,7 +33,6 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
     getVaultSlots,
     getStatus,
     getCountHighKeys,
-    onCharacterClick,
     isHistoricalView = false,
     mainCharacter
 }) => {
@@ -84,7 +82,10 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                             <tr
                                 key={char.id}
                                 className="bg-black/60 hover:bg-white/5 transition-all duration-300 group border border-white/5 rounded-2xl cursor-pointer shadow-2xl relative overflow-hidden"
-                                onClick={() => onCharacterClick(char)}
+                                onClick={() => {
+                                    const realm = char.realm.toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
+                                    window.open(`https://worldofwarcraft.blizzard.com/es-mx/character/us/${realm}/${char.name.toLowerCase()}`, '_blank');
+                                }}
                             >
                                 <td className="py-2 px-3 bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex items-center gap-4">

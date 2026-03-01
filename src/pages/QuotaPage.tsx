@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadCloud, FileText, CheckCircle, History, DollarSign, Crown, RotateCw, AlertCircle } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle, History, DollarSign, Crown, RotateCw, AlertCircle, Eye, Users } from 'lucide-react';
 import { parseLuaTable, type QuotaRecord } from '../utils/luaParser';
 import { quotaService } from '../services/quotaService';
 import { attendanceService } from '../services/attendanceService';
@@ -22,6 +22,9 @@ export const QuotaPage: React.FC = () => {
     const [orphanRecords, setOrphanRecords] = useState<(QuotaRecord & { id: string })[]>([]);
     const [loadingRanking, setLoadingRanking] = useState(true);
     const [currentQuota, setCurrentQuota] = useState<number>(0);
+    const [hasPendingDiscount, setHasPendingDiscount] = useState<boolean>(false);
+    const [pendingAttendees, setPendingAttendees] = useState<string[]>([]);
+    const [isAttendeesModalOpen, setIsAttendeesModalOpen] = useState(false);
 
     // Transfer State
     const [transferringRecord, setTransferringRecord] = useState<(QuotaRecord & { id: string }) | null>(null);
@@ -36,12 +39,13 @@ export const QuotaPage: React.FC = () => {
     const loadData = async () => {
         setLoadingRanking(true);
         try {
-            const [rankData, users, roster, q, orphans] = await Promise.all([
+            const [rankData, users, roster, q, orphans, pendingDiscount] = await Promise.all([
                 quotaService.getQuotaRanking(),
                 userService.getAllUsers(),
                 attendanceService.getCharacters(),
                 quotaService.getRaidQuota(),
-                isAdmin ? quotaService.getOrphanRecords() : Promise.resolve([])
+                isAdmin ? quotaService.getOrphanRecords() : Promise.resolve([]),
+                isAdmin ? quotaService.hasPendingRaidDiscount() : Promise.resolve(false)
             ]);
 
             // Tan: Primero cargamos el mapa de alters y tokens para deducir dueños reales
@@ -146,6 +150,7 @@ export const QuotaPage: React.FC = () => {
             setRanking(unifiedRanking);
             setOrphanRecords(orphans);
             setCurrentQuota(q);
+            setHasPendingDiscount(pendingDiscount);
         } catch (e) {
             console.error("Failed to load data", e);
             showToast("Error al cargar datos.", "error");
@@ -220,6 +225,16 @@ export const QuotaPage: React.FC = () => {
             showToast("Error al subir registros.", "error");
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleViewAttendees = async () => {
+        try {
+            const attendees = await quotaService.getPendingRaidAttendees();
+            setPendingAttendees(attendees);
+            setIsAttendeesModalOpen(true);
+        } catch (e) {
+            showToast("Error al cargar asistentes.", "error");
         }
     };
 
@@ -312,21 +327,43 @@ export const QuotaPage: React.FC = () => {
                             </span>
                         </div>
                         {isAdmin && (
-                            <button
-                                onClick={async () => {
-                                    if (!confirm("¿Descontar la cuota actual?")) return;
-                                    try {
-                                        const count = await quotaService.applyRaidQuotaDiscount();
-                                        showToast(`Aplicado a ${count} jugadores.`, 'success');
-                                        loadData();
-                                    } catch (e) {
-                                        showToast("Error.", "error");
-                                    }
-                                }}
-                                className="p-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-2xl transition-all hover:scale-110"
-                            >
-                                <History size={24} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleViewAttendees}
+                                    disabled={!hasPendingDiscount}
+                                    className={`p-4 rounded-2xl transition-all ${hasPendingDiscount
+                                        ? "bg-void/10 hover:bg-void/20 text-void-light border border-void/20 hover:scale-110"
+                                        : "bg-midnight-800/50 text-midnight-600 border border-midnight-700/50 cursor-not-allowed"
+                                        }`}
+                                    title="Ver lista de asistentes por cobrar"
+                                >
+                                    <Eye size={24} />
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!hasPendingDiscount) {
+                                            showToast("No hay registros de Asistencia pendientes de descontar", "error");
+                                            return;
+                                        }
+                                        if (!confirm("¿Descontar la cuota a los asistentes de la última raid?")) return;
+                                        try {
+                                            const count = await quotaService.applyRaidQuotaDiscount();
+                                            showToast(`Cuota cargada a ${count} asistentes.`, 'success');
+                                            loadData();
+                                        } catch (e: any) {
+                                            showToast(e.message || "Error al descontar.", "error");
+                                        }
+                                    }}
+                                    disabled={!hasPendingDiscount}
+                                    className={`p-4 rounded-2xl transition-all ${hasPendingDiscount
+                                        ? "bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:scale-110"
+                                        : "bg-midnight-800/50 text-midnight-600 border border-midnight-700/50 cursor-not-allowed"
+                                        }`}
+                                    title={hasPendingDiscount ? "Cobrar cuota a asistentes" : "Debes registrar Asistencia de una raid primero"}
+                                >
+                                    <History size={24} />
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -399,7 +436,14 @@ export const QuotaPage: React.FC = () => {
                                             ranking.map((row, idx) => {
                                                 const classColor = row.className ? getClassColor(row.className) : '#FFFFFF';
                                                 return (
-                                                    <tr key={idx} className="bg-black/40 hover:bg-black/60 transition-all duration-300 group border-b border-white/5 last:border-0">
+                                                    <tr
+                                                        key={idx}
+                                                        className="bg-black/40 hover:bg-black/60 transition-all duration-300 group border-b border-white/5 last:border-0 cursor-pointer"
+                                                        onClick={() => {
+                                                            const realm = 'ragnaros'; // Default realm or extracted from record if available
+                                                            window.open(`https://worldofwarcraft.blizzard.com/es-mx/character/us/${realm}/${row.name.toLowerCase()}`, '_blank');
+                                                        }}
+                                                    >
                                                         <td className="py-2 px-3 text-center">
                                                             <span className="text-midnight-600 font-black text-sm">{idx + 1}</span>
                                                         </td>
@@ -539,6 +583,65 @@ export const QuotaPage: React.FC = () => {
                     </div>
                 )
             }
-        </div >
+            {/* Pending Attendees Modal */}
+            {isAttendeesModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-sans">
+                    <div className="bg-[#0c0514] border border-white/10 rounded-[32px] w-full max-w-lg shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden relative">
+                        {/* Glow effect */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-500/10 blur-[100px] rounded-full"></div>
+
+                        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02] relative z-10">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-void/20 rounded-2xl border border-void/30">
+                                    <Users className="text-void-light" size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">Asistentes Pendientes</h3>
+                                    <p className="text-[10px] text-midnight-500 font-bold uppercase tracking-widest">Lista de cobro de Raid</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsAttendeesModalOpen(false)}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 text-midnight-400 hover:text-white hover:bg-white/10 transition-all border border-white/5"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="p-8 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 relative z-10">
+                            <p className="text-xs text-midnight-400 mb-6 font-medium leading-relaxed">
+                                Los siguientes personajes fueron registrados en los <span className="text-void-light font-black uppercase tracking-widest">WarcraftLogs</span>.
+                                Al procesar el cobro, se descontará el balance de sus respectivos dueños.
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                {pendingAttendees.map((name, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-4 bg-white/[0.03] rounded-2xl text-xs text-white border border-white/[0.05] hover:bg-white/[0.05] transition-colors group">
+                                        <div className="w-2 h-2 bg-void-light rounded-full shadow-[0_0_10px_rgba(110,64,255,0.5)] group-hover:scale-125 transition-transform"></div>
+                                        <span className="font-bold tracking-tight">{name}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {pendingAttendees.length === 0 && (
+                                <div className="text-center py-12">
+                                    <AlertCircle className="mx-auto text-midnight-700 mb-4" size={48} />
+                                    <p className="text-midnight-500 font-bold uppercase tracking-widest text-xs">No hay asistentes registrados</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-8 bg-white/[0.02] border-t border-white/5 flex justify-end relative z-10">
+                            <button
+                                onClick={() => setIsAttendeesModalOpen(false)}
+                                className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all border border-white/10 hover:scale-105 active:scale-95 shadow-lg"
+                            >
+                                Entendido
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };

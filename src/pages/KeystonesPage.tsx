@@ -31,12 +31,6 @@ export const KeystonesPage: React.FC = () => {
     const [isHistoricalView, setIsHistoricalView] = useState(false);
 
 
-    // Add Character Modal State
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newCharName, setNewCharName] = useState('');
-    const [newCharRealm, setNewCharRealm] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
-
     // Quick Armory Modal State
     const [selectedCharProfile, setSelectedCharProfile] = useState<CharacterProfile | null>(null);
 
@@ -81,23 +75,7 @@ export const KeystonesPage: React.FC = () => {
         fetchData();
     }, [selectedDate]);
 
-    const handleAddCharacter = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsAdding(true);
-        try {
-            await mythicPlusService.addCharacter(newCharName, newCharRealm);
-            setIsAddModalOpen(false);
-            setNewCharName('');
-            setNewCharRealm('');
-            fetchData();
-            showToast(`"${newCharName}" agregado y sincronizado con éxito.`, 'success');
-        } catch (error: any) {
-            console.error("Error adding character:", error);
-            showToast(error.message, 'error');
-        } finally {
-            setIsAdding(false);
-        }
-    };
+
 
     const handleCleanup = async () => {
         if (!confirm("¿Deseas borrar los personajes que no tienen datos de Blizzard (ilvl 0)?")) return;
@@ -272,12 +250,7 @@ export const KeystonesPage: React.FC = () => {
                                     <RotateCw size={14} />
                                     Sync Todo
                                 </button>
-                                <button
-                                    onClick={() => setIsAddModalOpen(true)}
-                                    className="bg-void hover:bg-void-dark text-white px-3 py-1.5 rounded-lg font-bold shadow-lg shadow-void/20 transition-all transform hover:scale-105 text-xs truncate"
-                                >
-                                    + Agregar
-                                </button>
+
                                 {hasPending && (
                                     <button
                                         onClick={handlePublish}
@@ -323,7 +296,6 @@ export const KeystonesPage: React.FC = () => {
                 getVaultSlots={mythicPlusService.getVaultSlots}
                 getStatus={mythicPlusService.getStatus}
                 getCountHighKeys={mythicPlusService.getCountHighKeys}
-                onCharacterClick={(char) => setSelectedCharProfile(char)}
                 isHistoricalView={isHistoricalView}
                 mainCharacter={mainCharacter}
             />
@@ -337,44 +309,7 @@ export const KeystonesPage: React.FC = () => {
                 region="us"
             />
 
-            {/* Add Character Modal */}
-            <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Agregar Personaje">
-                <form onSubmit={handleAddCharacter} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-midnight-300 mb-1">Nombre del Personaje</label>
-                        <input
-                            type="text"
-                            value={newCharName}
-                            onChange={(e) => setNewCharName(e.target.value)}
-                            className="w-full bg-midnight-950 border border-midnight-700 rounded p-2 text-white focus:border-void-light focus:outline-none"
-                            placeholder="Ej: Sylvanas"
-                            required
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-midnight-300 mb-1">Reino (Slug)</label>
-                        <input
-                            type="text"
-                            value={newCharRealm}
-                            onChange={(e) => setNewCharRealm(e.target.value)}
-                            className="w-full bg-midnight-950 border border-midnight-700 rounded p-2 text-white focus:border-void-light focus:outline-none"
-                            placeholder="Ej: ragnaros"
-                            required
-                        />
-                    </div>
-                    <div className="flex justify-end gap-3 mt-6">
-                        <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-midnight-400 hover:text-white">Cancelar</button>
-                        <button
-                            type="submit"
-                            disabled={isAdding}
-                            className="px-6 py-2 bg-void hover:bg-void-dark text-white rounded font-bold shadow-lg flex items-center gap-2"
-                        >
-                            {isAdding && <RefreshCw size={16} className="animate-spin" />}
-                            {isAdding ? 'Sincronizando...' : 'Agregar'}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
+
 
             {/* Rules Modal */}
             <Modal isOpen={isRulesModalOpen} onClose={() => setIsRulesModalOpen(false)} title="Configurar Reglas del Great Vault">
