@@ -12,7 +12,8 @@ import {
     User,
     Settings,
     FileText,
-    Home
+    Home,
+    History
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +29,7 @@ const navItems = [
     { name: 'Asistencia', path: '/attendance', icon: Users },
     { name: 'Cuota', path: '/quota', icon: Scroll },
     { name: 'Loot', path: '/loot', icon: Coins },
+    { name: 'Actualizaciones', path: '/actualizaciones', icon: History },
     { name: 'Perfil', path: '/perfil', icon: User },
     { name: 'Postulaciones', path: '/applications', icon: Users },
     { name: 'Usuarios', path: '/users', icon: Shield },

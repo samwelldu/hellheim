@@ -18,6 +18,7 @@ import { ApplyPage } from './pages/ApplyPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { AdminConfigPage } from './pages/AdminConfigPage';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { Updates } from './UI/módulos/Actualizaciones/Updates';
 
 function App() {
   return (
@@ -71,7 +72,17 @@ function App() {
                   <Loot />
                 </Layout>
               </PrivateRoute>
-            } />            <Route path="/perfil" element={
+            } />
+
+            <Route path="/actualizaciones" element={
+              <PrivateRoute>
+                <Layout>
+                  <Updates />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            <Route path="/perfil" element={
               <PrivateRoute>
                 <Layout>
                   <PerfilPage />
