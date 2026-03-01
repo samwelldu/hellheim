@@ -195,7 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const TanActualizarMain = async (charData: any) => {
         // Tan: Permitimos el registro si hay usuario de Firebase O de Blizzard
-        const userId = user?.uid || blizzardUser?.id;
+        const userId = user?.email || blizzardUser?.id;
         if (!userId || !playerToken) {
             console.warn("[TanSystem] No hay identidad activa para guardar el main o playerToken.");
             return;

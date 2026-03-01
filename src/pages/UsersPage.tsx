@@ -3,6 +3,7 @@ import { Trash2, Shield, Eye, EyeOff, Edit2, Check, X, Key, User } from 'lucide-
 import { userService } from '../services/userService';
 import type { AppUser, UserRole } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
+import { getClassIconUrl } from '../utils/wowIcons';
 import { clsx } from 'clsx';
 import { updatePassword } from 'firebase/auth';
 import { Modal } from '../components/ui/Modal';
@@ -50,7 +51,16 @@ export const UsersPage: React.FC = () => {
     const fetchUsers = async () => {
         try {
             const data = await userService.getAllUsers();
-            setUsers(data);
+            // Tan: Filtramos usuarios huérfanos que solo tienen rol pero ni email ni id de blizzard
+            const saneData = data.filter(u => u.email || u.accountId || (u.alias && u.alias.trim() !== ''));
+
+            // Tan: Para usuarios sin fecha, usamos un fallback numérico bajo para ordenamiento seguro si fuera necesario
+            const sanitizedUsers = saneData.map(u => ({
+                ...u,
+                createdAt: u.createdAt || 0
+            }));
+
+            setUsers(sanitizedUsers);
         } catch (err: any) {
             console.error(err);
             setError(err.message || 'Failed to load users');
@@ -78,7 +88,9 @@ export const UsersPage: React.FC = () => {
                         console.error("Error auto-adding user:", e);
                     }
                 } else {
-                    setUsers(usersList);
+                    // Mismo saneamiento por si la carga inicial viene del check
+                    const saneUsersList = usersList.filter(u => u.email || u.accountId || (u.alias && u.alias.trim() !== ''));
+                    setUsers(saneUsersList);
                     setLoading(false);
                 }
 
@@ -312,9 +324,12 @@ export const UsersPage: React.FC = () => {
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-lg bg-midnight-950 border border-midnight-700 flex items-center justify-center overflow-hidden">
                                                         <img
-                                                            src={`https://render.worldofwarcraft.com/us/icons/56/class_${user.mainCharacter.className?.toLowerCase().replace(/\s+/g, '') || 'warrior'}.jpg`}
-                                                            alt=""
-                                                            className="w-full h-full object-cover opacity-50"
+                                                            src={getClassIconUrl(user.mainCharacter.className) || "https://wow.zamimg.com/images/logos/wowhead-logo.png"}
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).src = "https://wow.zamimg.com/images/logos/wowhead-logo.png";
+                                                            }}
+                                                            alt={user.mainCharacter.className}
+                                                            className="w-full h-full object-cover opacity-80"
                                                         />
                                                     </div>
                                                     <div className="flex flex-col">
