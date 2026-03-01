@@ -366,6 +366,7 @@ export const AttendancePage: React.FC = () => {
                                     </td>
                                 </tr>
                             ) : roster
+                                .sort((a, b) => a.name.localeCompare(b.name))
                                 .filter(member => member.name.toLowerCase().includes(searchQuery.toLowerCase()))
                                 .map((member) => {
                                     const classColor = getClassColor(member.className);
@@ -383,54 +384,54 @@ export const AttendancePage: React.FC = () => {
                                             className="hover:bg-void/5 transition-all duration-300 group"
                                         >
                                             <td
-                                                className="p-5 cursor-pointer relative overflow-hidden"
+                                                className="py-2 px-3 cursor-pointer relative overflow-hidden"
                                                 onClick={() => setSelectedChar({ name: member.name, realm: member.realm })}
                                             >
                                                 <div className="flex flex-col relative z-10">
-                                                    <span className="font-black text-lg tracking-tight group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
+                                                    <span className="font-black text-sm tracking-tight group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
                                                         {member.name}
                                                     </span>
-                                                    <span className="text-[10px] text-midnight-500 uppercase tracking-[0.1em] font-black opacity-60">
+                                                    <span className="text-[9px] text-midnight-500 uppercase tracking-[0.1em] font-black opacity-60">
                                                         {member.className} <span className="text-midnight-700 px-1">•</span> {member.realm}
                                                     </span>
                                                 </div>
                                                 {/* Subtle class color glow behind name */}
                                                 <div className="absolute inset-y-0 left-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: classColor }}></div>
                                             </td>
-                                            <td className="p-5 text-center text-sm text-midnight-300 font-black">
+                                            <td className="py-2 px-3 text-center text-xs text-midnight-300 font-black">
                                                 {member.level}
                                             </td>
-                                            <td className="p-5 text-center">
-                                                <span className="text-sm font-black text-yellow-500 drop-shadow-glow">
+                                            <td className="py-2 px-3 text-center">
+                                                <span className="text-xs font-black text-yellow-500 drop-shadow-glow">
                                                     {member.ilvl || '---'}
                                                 </span>
                                             </td>
-                                            <td className="p-5 text-right">
-                                                <div className="flex justify-end items-center gap-4">
+                                            <td className="py-2 px-3 text-right">
+                                                <div className="flex justify-end items-center gap-2">
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-[10px] text-midnight-500 font-black uppercase tracking-tighter leading-none mb-1">
+                                                        <span className="text-[9px] text-midnight-500 font-black uppercase tracking-tighter leading-none mb-1">
                                                             {member.attendedRaids} de {totalRaids}
                                                         </span>
-                                                        <div className="w-24 h-1.5 bg-midnight-950 rounded-full overflow-hidden p-[1px] border border-midnight-800">
+                                                        <div className="w-16 h-1.5 bg-midnight-950 rounded-full overflow-hidden p-[1px] border border-midnight-800">
                                                             <div
                                                                 className={`h-full rounded-full ${barColor} transition-all duration-1000 shadow-[0_0_8px_rgba(0,0,0,0.3)]`}
                                                                 style={{ width: `${percent}%` }}
                                                             ></div>
                                                         </div>
                                                     </div>
-                                                    <span className={`text-xl font-black ${textColor} tracking-tighter min-w-[3ch]`}>
+                                                    <span className={`text-sm font-black ${textColor} tracking-tighter min-w-[3ch]`}>
                                                         {percent}%
                                                     </span>
                                                 </div>
                                             </td>
                                             {isAdmin && (
-                                                <td className="p-5 text-center">
+                                                <td className="py-2 px-3 text-center">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleDeleteCharacter(member.id, member.name); }}
-                                                        className="p-3 text-midnight-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                                        className="p-1.5 text-midnight-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                                                         title="Eliminar del roster"
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <Trash2 size={14} />
                                                     </button>
                                                 </td>
                                             )}

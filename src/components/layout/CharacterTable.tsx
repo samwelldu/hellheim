@@ -51,8 +51,8 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                         <th className="px-4 pb-2 text-center w-32">Estado</th>
                     </tr>
                 </thead>
-                <tbody className="space-y-3">
-                    {characters.map((char) => {
+                <tbody className="space-y-1">
+                    {[...characters].sort((a, b) => a.name.localeCompare(b.name)).map((char) => {
                         const classColor = getClassColor(char.className);
                         const isSyncing = syncingIds.has(char.id);
 
@@ -86,10 +86,10 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                 className="bg-black/60 hover:bg-white/5 transition-all duration-300 group border border-white/5 rounded-2xl cursor-pointer shadow-2xl relative overflow-hidden"
                                 onClick={() => onCharacterClick(char)}
                             >
-                                <td className="p-5 bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
+                                <td className="py-2 px-3 bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex items-center gap-4">
                                         <div className={clsx(
-                                            "w-10 h-10 rounded-xl shadow-inner flex items-center justify-center border shrink-0 transition-transform group-hover:scale-110",
+                                            "w-8 h-8 rounded-xl shadow-inner flex items-center justify-center border shrink-0 transition-transform group-hover:scale-110",
                                             char.faction === 'Alliance' ? "bg-blue-900/20 border-blue-500/30 text-blue-400" : "bg-red-900/20 border-red-500/30 text-red-400"
                                         )}>
                                             <span className="text-xs font-black tracking-tighter">{char.faction?.[0] || '?'}</span>
@@ -97,7 +97,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
 
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 mb-0.5">
-                                                <h3 className="text-lg font-black tracking-tight truncate leading-none group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
+                                                <h3 className="text-base font-black tracking-tight truncate leading-none group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
                                                     {char.name}
                                                 </h3>
                                                 {isStale && (
@@ -124,17 +124,17 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                                         PENDIENTE
                                                     </div>
                                                 )}
-                                                <span className="text-[10px] font-black text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">
+                                                <span className="text-[9px] font-black text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">
                                                     lvl {displayLevel}
                                                 </span>
                                             </div>
 
-                                            <div className="text-[10px] text-midnight-500 uppercase tracking-widest font-black flex items-center gap-2 opacity-80">
+                                            <div className="text-[9px] text-midnight-500 uppercase tracking-widest font-black flex items-center gap-2 opacity-80">
                                                 <span>{displaySpec} {displayClass}</span>
                                                 <span className="text-midnight-800">•</span>
                                                 <span>{char.realm}</span>
                                             </div>
-                                            <div className="text-xs font-black text-white flex items-center gap-2 mt-1">
+                                            <div className="text-xs font-black text-white flex items-center gap-2 mt-0.5">
                                                 <span className="text-[8px] uppercase tracking-[0.2em] text-midnight-600 font-black">Item Level</span>
                                                 <span className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">{displayIlvl}</span>
                                             </div>
@@ -171,17 +171,17 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                     })()}
                                 </td>
 
-                                <td className="p-5 text-center bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
-                                    <div className="flex flex-col items-center justify-center p-3 bg-black/60 border border-white/5 rounded-2xl w-14 h-14 mx-auto shadow-inner group-hover:border-white/10 transition-colors">
-                                        <span className="text-2xl font-black text-white drop-shadow-glow">
+                                <td className="py-2 px-3 text-center bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
+                                    <div className="flex flex-col items-center justify-center py-1.5 bg-black/60 border border-white/5 rounded-xl w-12 h-12 mx-auto shadow-inner group-hover:border-white/10 transition-colors">
+                                        <span className="text-xl font-black text-white drop-shadow-glow">
                                             {displayM0 + Object.values(displayHistory).reduce((a, b) => a + b, 0)}
                                         </span>
-                                        <span className="text-[8px] uppercase tracking-widest text-midnight-600 font-black">M0 + M+</span>
+                                        <span className="text-[7px] uppercase tracking-widest text-midnight-600 font-black">M0 + M+</span>
                                     </div>
                                 </td>
 
-                                <td className="p-5 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
-                                    <div className="flex items-center justify-center gap-3">
+                                <td className="py-2 px-3 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
+                                    <div className="flex items-center justify-center gap-2">
                                         {[0, 1, 2].map(i => {
                                             const lvl = vaultSlots[i];
                                             const isUnlocked = lvl > 0;
@@ -189,16 +189,16 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                                 <div
                                                     key={i}
                                                     className={clsx(
-                                                        "w-12 h-16 rounded-xl flex flex-col items-center justify-center border transition-all relative overflow-hidden",
+                                                        "w-10 h-10 rounded-lg flex flex-col items-center justify-center border transition-all relative overflow-hidden",
                                                         isUnlocked
                                                             ? "bg-gradient-to-b from-black/80 to-black border-void/50 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
                                                             : "bg-black/80 border-white/5 text-midnight-800"
                                                     )}
                                                 >
                                                     {isUnlocked && <div className="absolute inset-x-0 top-0 h-0.5 bg-void-light"></div>}
-                                                    <span className="text-[9px] uppercase font-black text-midnight-600 mb-1 z-10">Slot {i + 1}</span>
+                                                    <span className="text-[7px] uppercase font-black text-midnight-600 leading-tight z-10">S{i + 1}</span>
                                                     <span className={clsx(
-                                                        "text-2xl font-black leading-none z-10 tracking-tighter",
+                                                        "text-xl font-black leading-none z-10 tracking-tighter",
                                                         isUnlocked ? "text-white drop-shadow-glow" : "text-midnight-800"
                                                     )}>
                                                         {isUnlocked ? lvl : '-'}
@@ -209,36 +209,36 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                     </div>
                                 </td>
 
-                                <td className="p-5 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="flex gap-2">
+                                <td className="py-2 px-3 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="flex gap-1.5">
                                             {[
                                                 { label: '2-5', range: [2, 5], color: 'text-midnight-400' },
                                                 { label: '6-9', range: [6, 9], color: 'text-midnight-300' },
                                                 { label: '10-12', range: [10, 12], color: 'text-void-light' },
                                             ].map(r => (
-                                                <div key={r.label} className="flex flex-col items-center p-2 bg-black/60 border border-white/5 rounded-xl min-w-[45px] transition-colors group-hover:border-white/10">
-                                                    <span className="text-[8px] text-midnight-600 uppercase font-black mb-1">{r.label}</span>
-                                                    <span className={clsx("text-sm font-black", r.color)}>
+                                                <div key={r.label} className="flex flex-col items-center py-1 px-1.5 bg-black/60 border border-white/5 rounded-lg min-w-[35px] transition-colors group-hover:border-white/10">
+                                                    <span className="text-[7px] text-midnight-600 uppercase font-black leading-none mb-0.5">{r.label}</span>
+                                                    <span className={clsx("text-xs font-black", r.color)}>
                                                         {Object.entries(displayHistory).reduce((acc, [l, c]) => (parseInt(l) >= r.range[0] && parseInt(l) <= r.range[1] ? acc + c : acc), 0) || '-'}
                                                     </span>
                                                 </div>
                                             ))}
-                                            <div className="flex flex-col items-center p-2 bg-void/10 border border-void/30 rounded-xl min-w-[45px] shadow-[0_0_15px_rgba(168,85,247,0.1)]">
-                                                <span className="text-[8px] text-void-light uppercase font-black mb-1">13+</span>
-                                                <span className="text-base font-black text-white drop-shadow-glow">
+                                            <div className="flex flex-col items-center py-1 px-1.5 bg-void/10 border border-void/30 rounded-lg min-w-[35px] shadow-[0_0_15px_rgba(168,85,247,0.1)]">
+                                                <span className="text-[7px] text-void-light uppercase font-black leading-none mb-0.5">13+</span>
+                                                <span className="text-sm font-black text-white drop-shadow-glow">
                                                     {getCountHighKeys(displayHistory)}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1">
                                             <div className="w-1.5 h-1.5 rounded-full bg-midnight-700"></div>
-                                            <span className="text-[10px] text-midnight-500 font-black uppercase tracking-widest">Total: {Object.values(displayHistory).reduce((a, b) => a + b, 0)}</span>
+                                            <span className="text-[9px] text-midnight-500 font-black uppercase tracking-widest">Total: {Object.values(displayHistory).reduce((a, b) => a + b, 0)}</span>
                                         </div>
                                     </div>
                                 </td>
 
-                                <td className="p-5 text-center bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
+                                <td className="py-2 px-3 text-center bg-black/40 first:rounded-l-2xl last:rounded-r-2xl border-y first:border-l last:border-r border-white/5 group-hover:bg-black/60 transition-colors">
                                     {(() => {
                                         const statusStyles = {
                                             complete: "bg-green-500/10 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(72,222,128,0.15)]",
@@ -250,7 +250,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
 
                                         return (
                                             <div className={clsx(
-                                                "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] border transition-all group-hover:scale-105 duration-500",
+                                                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] border transition-all group-hover:scale-105 duration-500",
                                                 style
                                             )}>
                                                 {status.label}

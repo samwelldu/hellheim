@@ -70,9 +70,12 @@ export const cmsService = {
 
     subscribeToLanding: (callback: (content: LandingContent) => void) => {
         const docRef = doc(db, 'cms', 'landing');
-        return onSnapshot(docRef, (doc) => {
-            if (doc.exists()) {
-                callback(doc.data() as LandingContent);
+        return onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                callback(docSnap.data() as LandingContent);
+            } else {
+                setDoc(docRef, DEFAULT_CONTENT).catch(console.error);
+                callback(DEFAULT_CONTENT);
             }
         });
     },

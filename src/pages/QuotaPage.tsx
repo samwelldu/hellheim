@@ -140,8 +140,8 @@ export const QuotaPage: React.FC = () => {
                 });
             });
 
-            // Ordenar por balance (Monto descendente)
-            unifiedRanking.sort((a, b) => b.amount - a.amount);
+            // Ordenar por nombre (Alfabético)
+            unifiedRanking.sort((a, b) => a.name.localeCompare(b.name));
 
             setRanking(unifiedRanking);
             setOrphanRecords(orphans);
@@ -388,45 +388,45 @@ export const QuotaPage: React.FC = () => {
                             <div className="overflow-x-auto max-h-[700px] scrollbar-thin scrollbar-thumb-white/5">
                                 <table className="w-full text-left border-collapse">
                                     <thead className="bg-black sticky top-0 z-10 text-midnight-500 uppercase text-[10px] tracking-widest font-black border-b border-white/5">
-                                        <tr><th className="p-6 w-20 text-center">#</th><th className="p-6">Jugador Identificado</th><th className="p-6 text-right">Balance Total</th></tr>
+                                        <tr><th className="py-2 px-3 w-16 text-center">#</th><th className="py-2 px-3">Jugador Identificado</th><th className="py-2 px-3 text-right">Balance Total</th></tr>
                                     </thead>
                                     <tbody className="divide-y divide-midnight-700/20">
                                         {loadingRanking ? (
-                                            <tr><td colSpan={3} className="p-20 text-center text-midnight-500 font-black animate-pulse">Calculando balances...</td></tr>
+                                            <tr><td colSpan={3} className="py-10 px-3 text-center text-midnight-500 font-black animate-pulse">Calculando balances...</td></tr>
                                         ) : ranking.length === 0 ? (
-                                            <tr><td colSpan={3} className="p-20 text-center text-midnight-600 font-black">Sin registros</td></tr>
+                                            <tr><td colSpan={3} className="py-10 px-3 text-center text-midnight-600 font-black">Sin registros</td></tr>
                                         ) : (
                                             ranking.map((row, idx) => {
                                                 const classColor = row.className ? getClassColor(row.className) : '#FFFFFF';
                                                 return (
                                                     <tr key={idx} className="bg-black/40 hover:bg-black/60 transition-all duration-300 group border-b border-white/5 last:border-0">
-                                                        <td className="p-6 text-center">
-                                                            {idx < 3 ? <div className="w-10 h-10 bg-midnight-900 rounded-xl flex items-center justify-center border border-midnight-700 mx-auto text-xl">{['🥇', '🥈', '🥉'][idx]}</div> : <span className="text-midnight-600 font-black text-lg">{idx + 1}</span>}
+                                                        <td className="py-2 px-3 text-center">
+                                                            <span className="text-midnight-600 font-black text-sm">{idx + 1}</span>
                                                         </td>
-                                                        <td className="p-6">
-                                                            <div className="flex items-center gap-4">
+                                                        <td className="py-2 px-3">
+                                                            <div className="flex items-center gap-3">
                                                                 {row.className && (
-                                                                    <div className="w-10 h-10 rounded-xl bg-midnight-900 border border-midnight-700 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                                                                    <div className="w-6 h-6 rounded-md bg-midnight-900 border border-midnight-700 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform shrink-0">
                                                                         <img
                                                                             src={`https://render.worldofwarcraft.com/us/icons/56/classicon_${row.className.toLowerCase().replace(/\s+/g, '')}.jpg`}
                                                                             alt={row.className}
-                                                                            className="w-7 h-7 rounded-lg"
+                                                                            className="w-4 h-4 rounded-sm"
                                                                             onError={(e) => (e.currentTarget.style.display = 'none')}
                                                                         />
                                                                     </div >
                                                                 )}
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-xl font-black tracking-tight group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
+                                                                    <span className="text-sm font-black tracking-tight group-hover:translate-x-1 transition-transform" style={{ color: classColor }}>
                                                                         {row.name}
                                                                     </span>
-                                                                    <div className="flex items-center gap-2">
+                                                                    <div className="flex items-center gap-2 mt-0.5">
                                                                         {row.isPlayerToken && (
-                                                                            <span className="text-[9px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20 font-black uppercase tracking-tighter">
+                                                                            <span className="text-[8px] bg-yellow-500/10 text-yellow-500 px-1 py-0.5 rounded border border-yellow-500/20 font-black uppercase tracking-tighter leading-none">
                                                                                 Verificado
                                                                             </span>
                                                                         )}
                                                                         {row.className && (
-                                                                            <span className="text-[10px] text-midnight-500 uppercase font-black tracking-widest opacity-60">
+                                                                            <span className="text-[9px] text-midnight-500 uppercase font-black tracking-widest opacity-60 leading-none">
                                                                                 {row.className}
                                                                             </span>
                                                                         )}
@@ -434,8 +434,8 @@ export const QuotaPage: React.FC = () => {
                                                                 </div>
                                                             </div >
                                                         </td >
-                                                        <td className="p-6 text-right">
-                                                            <span className={clsx("font-black text-2xl tracking-tighter", row.amount < 0 ? "text-red-500" : "text-yellow-500")}>
+                                                        <td className="py-2 px-3 text-right">
+                                                            <span className={clsx("font-black text-base tracking-tighter", row.amount < 0 ? "text-red-500" : "text-yellow-500")}>
                                                                 {formatGold(row.amount)}
                                                             </span>
                                                         </td>
@@ -461,21 +461,21 @@ export const QuotaPage: React.FC = () => {
                                         <table className="w-full text-left border-collapse">
                                             <thead className="bg-midnight-950/60 text-midnight-600 uppercase text-[9px] tracking-widest font-black">
                                                 <tr>
-                                                    <th className="p-4">Personaje LUA</th>
-                                                    <th className="p-4">Monto</th>
-                                                    <th className="p-4 text-right">Acciones</th>
+                                                    <th className="py-2 px-3">Personaje LUA</th>
+                                                    <th className="py-2 px-3">Monto</th>
+                                                    <th className="py-2 px-3 text-right">Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-midnight-700/10">
                                                 {orphanRecords.map((rec) => (
                                                     <tr key={rec.id} className="hover:bg-midnight-900/40 transition-colors">
-                                                        <td className="p-4">
-                                                            <span className="text-sm font-black text-midnight-300">{rec.name}</span>
+                                                        <td className="py-2 px-3">
+                                                            <span className="text-xs font-black text-midnight-300">{rec.name}</span>
                                                         </td>
-                                                        <td className="p-4">
-                                                            <span className="text-sm font-black text-yellow-500/80">{formatGold(rec.amount)}</span>
+                                                        <td className="py-2 px-3">
+                                                            <span className="text-xs font-black text-yellow-500/80">{formatGold(rec.amount)}</span>
                                                         </td>
-                                                        <td className="p-4 text-right flex justify-end gap-2">
+                                                        <td className="py-2 px-3 text-right flex justify-end gap-2">
                                                             <button
                                                                 onClick={() => handleReturnGold(rec.id)}
                                                                 className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all border border-red-500/20"
