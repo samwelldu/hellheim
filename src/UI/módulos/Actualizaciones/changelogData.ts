@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        id: "v1.2.1",
+        version: "v1.2.1",
+        date: new Date().toLocaleDateString(),
+        title: "Actualización: Soporte para Kick.com y mejoras de Streamers",
+        changes: [
+            "Adición de soporte para Kick.com en el módulo de Streamers.",
+            "Visualización de streamers integrada en la Landing Page pública.",
+            "Mejora de UI: Sidebar de streamers ahora se muestra abierta por defecto en escritorio.",
+            "Automatización: Reproducción automática activada para todos los streams.",
+            "Gestión: Selector de plataforma (Twitch/Kick) añadido al CMS."
+        ]
+    },
+    {
         id: "v1.2.0",
         version: "v1.2.0",
         date: "01/03/2026",

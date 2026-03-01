@@ -7,6 +7,7 @@ import { clsx } from 'clsx';
 import { useAuth } from '../context/AuthContext';
 import { PublicNavbar } from '../UI/componentes/PublicNavbar';
 import { cmsService, type LandingContent, type GuildNews } from '../services/cmsService';
+import { StreamerWidget } from '../components/layout/StreamerWidget';
 
 const B_ICON_MAP: Record<string, any> = {
     Shield: <Shield />,
@@ -441,6 +442,7 @@ export const LandingPage: React.FC = () => {
                     </div>
                 )}
             </AnimatePresence>
+            <StreamerWidget />
         </div>
     );
 };

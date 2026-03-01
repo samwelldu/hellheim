@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cmsService, type LandingContent, type GuildNews } from '../services/cmsService';
 import { useToast } from '../context/ToastContext';
-import { Save, Settings, Layout, Users, Play, RefreshCw, Plus, Trash2, FileText, Globe, Image as ImageIcon } from 'lucide-react';
+import { Save, Settings, Layout, Users, Play, RefreshCw, Plus, Trash2, FileText, Globe, Image as ImageIcon, Tv } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const CMSPage: React.FC = () => {
@@ -19,6 +19,8 @@ export const CMSPage: React.FC = () => {
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [newStreamer, setNewStreamer] = useState('');
+    const [streamerPlatform, setStreamerPlatform] = useState<'twitch' | 'kick'>('twitch');
 
     useEffect(() => {
         loadData();
@@ -245,6 +247,82 @@ export const CMSPage: React.FC = () => {
                                             </select>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Streamers Settings */}
+                        <div className="lg:col-span-2 glass p-1 relative">
+                            <div className="bg-black/40 p-10 rounded-[28px] border border-white/5 space-y-10">
+                                <h2 className="text-2xl font-black text-white flex items-center gap-3"><Tv className="text-void-light" size={24} /> Streamers de WoW</h2>
+
+                                <div className="space-y-6">
+                                    <div className="flex flex-col md:flex-row items-end gap-4 bg-black/20 p-6 rounded-3xl border border-white/5">
+                                        <div className="flex-[3] space-y-2">
+                                            <label className="text-[10px] text-midnight-500 uppercase font-black tracking-[0.2em] px-1">Nombre del Canal</label>
+                                            <input
+                                                className="w-full bg-black/40 border-2 border-midnight-700/30 rounded-xl px-5 py-3 text-white focus:border-void outline-none transition-all font-bold text-sm"
+                                                value={newStreamer}
+                                                onChange={e => setNewStreamer(e.target.value)}
+                                                placeholder="Ej: shroud"
+                                            />
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            <label className="text-[10px] text-midnight-500 uppercase font-black tracking-[0.2em] px-1">Plataforma</label>
+                                            <select
+                                                className="w-full bg-black/40 border-2 border-midnight-700/30 rounded-xl px-5 py-3 text-white focus:border-void outline-none transition-all font-bold text-sm appearance-none cursor-pointer"
+                                                value={streamerPlatform}
+                                                onChange={e => setStreamerPlatform(e.target.value as any)}
+                                            >
+                                                <option value="twitch">Twitch</option>
+                                                <option value="kick">Kick</option>
+                                            </select>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                if (!newStreamer.trim() || !content) return;
+                                                const streamers = content.streamers || [];
+                                                const name = newStreamer.trim().toLowerCase();
+                                                if (streamers.some(s => s.name === name)) {
+                                                    showToast("El streamer ya existe", "error");
+                                                    return;
+                                                }
+                                                setContent({
+                                                    ...content,
+                                                    streamers: [...streamers, { name, platform: streamerPlatform }]
+                                                });
+                                                setNewStreamer('');
+                                            }}
+                                            className="bg-void hover:bg-void-light text-white font-black p-3.5 rounded-xl transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center shrink-0"
+                                        >
+                                            <Plus size={20} />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {(content.streamers || []).map((s, idx) => (
+                                            <div key={idx} className="bg-black/30 p-4 rounded-xl border border-midnight-800 flex justify-between items-center group hover:border-void/30 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={clsx(
+                                                        "text-[10px] font-black px-2 py-0.5 rounded-md uppercase",
+                                                        s.platform === 'twitch' ? "bg-purple-500/20 text-purple-400" : "bg-green-500/20 text-green-400"
+                                                    )}>
+                                                        {s.platform}
+                                                    </div>
+                                                    <span className="font-bold text-white lowercase">{s.name}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const newS = content.streamers.filter(sm => sm.name !== s.name);
+                                                        setContent({ ...content, streamers: newS });
+                                                    }}
+                                                    className="p-2 text-midnight-600 hover:text-red-500 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>

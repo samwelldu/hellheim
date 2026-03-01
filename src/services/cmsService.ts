@@ -19,6 +19,7 @@ export interface LandingContent {
         icon: string;
         color: string;
     }[];
+    streamers: { name: string, platform: 'twitch' | 'kick' }[];
 }
 
 export interface GuildNews {
@@ -46,7 +47,8 @@ const DEFAULT_CONTENT: LandingContent = {
         { role: 'Tanks', status: 'Cerrado', icon: 'Shield', color: 'text-red-500' },
         { role: 'Healers', status: 'Alta', icon: 'Zap', color: 'text-green-500' },
         { role: 'DPS', status: 'Media', icon: 'Sword', color: 'text-yellow-500' }
-    ]
+    ],
+    streamers: []
 };
 
 export const cmsService = {

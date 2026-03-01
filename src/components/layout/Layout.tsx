@@ -1,5 +1,5 @@
-import React from 'react';
 import { Sidebar } from './Sidebar';
+import { StreamerWidget } from './StreamerWidget';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -21,6 +21,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             <div className="relative z-10">
                 <Sidebar />
+                <StreamerWidget />
                 <main className="md:ml-64 p-4 md:p-8 min-h-screen transition-all duration-300">
                     <div className="max-w-7xl mx-auto mt-12 md:mt-0">
                         {children}
