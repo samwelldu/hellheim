@@ -8,9 +8,22 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        id: "v1.3.0",
+        version: "v1.3.0",
+        date: new Date().toLocaleDateString(),
+        title: "Nuevo Módulo: Guías Wowhead",
+        changes: [
+            "Creación del módulo interactivo de 'Guías Wowhead' en el menú principal.",
+            "Integrador de catálogo de 13 Clases y 39 Especializaciones de World of Warcraft.",
+            "Soporte para enlaces dinámicos especializados en PVE (BiS, Stats, Talentos, Consumibles).",
+            "Auto-clasificación de enlaces según el rol y especialización (Tank, Healer, DPS).",
+            "Adición de soporte para la nueva especialidad heroica: Devourer (Cazador de Demonios)."
+        ]
+    },
+    {
         id: "v1.2.1",
         version: "v1.2.1",
-        date: new Date().toLocaleDateString(),
+        date: "04/03/2026",
         title: "Actualización: Soporte para Kick.com y mejoras de Streamers",
         changes: [
             "Adición de soporte para Kick.com en el módulo de Streamers.",

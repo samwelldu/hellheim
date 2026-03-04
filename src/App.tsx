@@ -19,6 +19,7 @@ import { ApplicationsPage } from './pages/ApplicationsPage';
 import { AdminConfigPage } from './pages/AdminConfigPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { Updates } from './UI/módulos/Actualizaciones/Updates';
+import { WowheadGuia } from './UI/módulos/WowheadGuia/WowheadGuia';
 
 function App() {
   return (
@@ -78,6 +79,14 @@ function App() {
               <PrivateRoute>
                 <Layout>
                   <Updates />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            <Route path="/guias" element={
+              <PrivateRoute>
+                <Layout>
+                  <WowheadGuia />
                 </Layout>
               </PrivateRoute>
             } />

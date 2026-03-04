@@ -91,3 +91,77 @@ export const syncCharacterData = functions.runWith({
         }
     });
 });
+/**
+ * Get Twitch OAuth2 Token
+ */
+async function getTwitchToken(): Promise<string> {
+    const clientId = process.env.TWITCH_CLIENT_ID;
+    const clientSecret = process.env.TWITCH_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+        throw new Error("Missing Twitch API credentials in environment (Secrets).");
+    }
+
+    const response = await axios.post('https://id.twitch.tv/oauth2/token', null, {
+        params: {
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'client_credentials'
+        }
+    });
+
+    return response.data.access_token;
+}
+
+/**
+ * Get Streamer Status (Twitch/Kick)
+ */
+export const getStreamerStatus = functions.runWith({
+    secrets: ["TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET"]
+}).https.onRequest((req, res) => {
+    return cors(req, res, async () => {
+        const { streamers } = req.body; // Array of { name, platform }
+
+        if (!Array.isArray(streamers)) {
+            res.status(400).send('Invalid streamers array');
+            return;
+        }
+
+        try {
+            const twitchToken = await getTwitchToken();
+            const twitchClientId = process.env.TWITCH_CLIENT_ID;
+
+            const results = await Promise.all(streamers.map(async (s: any) => {
+                if (s.platform === 'twitch') {
+                    try {
+                        const response = await axios.get(`https://api.twitch.tv/helix/streams?user_login=${s.name}`, {
+                            headers: {
+                                'Client-ID': twitchClientId,
+                                'Authorization': `Bearer ${twitchToken}`
+                            }
+                        });
+                        const isLive = response.data.data.length > 0;
+                        return { name: s.name, platform: s.platform, isLive, metadata: isLive ? response.data.data[0] : null };
+                    } catch (e) {
+                        return { name: s.name, platform: s.platform, isLive: false, error: true };
+                    }
+                } else if (s.platform === 'kick') {
+                    try {
+                        // Kick workaround (Public API if available or fallback)
+                        const response = await axios.get(`https://kick.com/api/v1/channels/${s.name}`);
+                        const isLive = response.data.livestream !== null;
+                        return { name: s.name, platform: s.platform, isLive, metadata: response.data.livestream };
+                    } catch (e) {
+                        return { name: s.name, platform: s.platform, isLive: false, error: true };
+                    }
+                }
+                return { name: s.name, platform: s.platform, isLive: false };
+            }));
+
+            res.status(200).json(results);
+        } catch (error: any) {
+            console.error("Streamer Status Error:", error.message);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+});
