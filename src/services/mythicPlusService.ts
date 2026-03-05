@@ -175,7 +175,7 @@ export const mythicPlusService = {
             const fullRaidHistory = this._processFullRaidHistory(raidsData);
 
             // 4. M0 Data
-            const mythic0Count = await this._syncMythic0(characterName, realm, detectedRegion, 0);
+            const mythic0Count = await this._syncMythic0(characterName, realm, detectedRegion, resetTime);
 
             const updateData: Partial<CharacterProfile> = {
                 name: profile.name || characterName,
@@ -262,33 +262,22 @@ export const mythicPlusService = {
         let count = 0;
         try {
             const dungeonsData = await blizzardService.getCharacterDungeons(realm, name, region);
-            if (dungeonsData && dungeonsData.dungeons) {
-                // Logic: count dungeons where difficulty is Mythic (23) and proper season/time if needed.
-                // For now, assuming the API returns relevant weekly runs or we count total. 
-                // Usually "dungeons" endpoint might return all. 
-                // Let's assume we filter by "Mythic" difficulty and checked current lockout interactions if data allows.
-                // Detailed implementation depends on raw response structure. 
-                // Reverting to previous logic:
-                /* 
-                   Previous logic was likely counting expansions[current].instances[...].modes[mythic].completed_count > 0 ?
-                   But since we don't have the exact previous code for logic inside _syncMythic0 in context, 
-                   I will safeguard it to return a basic count or 0.
-                */
-                // Simple count of completed dungeons in the list for now if structure flat, 
-                // or just returning 0 if we need to see the response.
-                // Wait, I see the viewed files in history.
-                // It just had "logic to count M0 runs".
-                // I will write a best-effort logic:
+            if (dungeonsData && dungeonsData.expansions) {
+                // Tan: Iteramos sobre todas las expansiones, pero mayormente afectará a la actual
                 for (const expansion of dungeonsData.expansions || []) {
                     for (const instance of expansion.instances || []) {
                         for (const mode of instance.modes || []) {
                             // Tan: Buscamos dificultad "Mythic" (ID 23 generalmente). 
-                            // Algunos registros pueden venir como "Mythic" o "Mítico".
+                            // Evitamos subcadenas relacionadas con M+ (keystone).
                             const isMythic0 = mode.difficulty.name.toLowerCase().includes('mythic') &&
-                                !mode.difficulty.name.toLowerCase().includes('keystone'); // Evitamos M+
+                                !mode.difficulty.name.toLowerCase().includes('keystone');
 
-                            if (isMythic0 && mode.progress.completed_count > 0) {
-                                count += mode.progress.completed_count;
+                            if (isMythic0 && mode.progress.encounters) {
+                                // Validar boss por boss si se completó en la semana actual (sobre _resetTime)
+                                const doneThisWeek = mode.progress.encounters.some((boss: any) => boss.last_kill_timestamp > _resetTime);
+                                if (doneThisWeek) {
+                                    count++;
+                                }
                             }
                         }
                     }
