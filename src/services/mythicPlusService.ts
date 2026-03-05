@@ -267,10 +267,9 @@ export const mythicPlusService = {
                 for (const expansion of dungeonsData.expansions || []) {
                     for (const instance of expansion.instances || []) {
                         for (const mode of instance.modes || []) {
-                            // Tan: Buscamos dificultad "Mythic" (ID 23 generalmente). 
-                            // Evitamos subcadenas relacionadas con M+ (keystone).
-                            const isMythic0 = mode.difficulty.name.toLowerCase().includes('mythic') &&
-                                !mode.difficulty.name.toLowerCase().includes('keystone');
+                            // Tan: Buscamos dificultad "Mythic" por su type para evitar problemas de idioma (Mítico/Mythic)
+                            const diffType = mode.difficulty?.type || '';
+                            const isMythic0 = diffType === 'MYTHIC';
 
                             if (isMythic0 && mode.progress.encounters) {
                                 // Validar boss por boss si se completó en la semana actual (sobre _resetTime)
