@@ -14,7 +14,7 @@ interface CharacterTableProps {
     isAdmin: boolean;
     onSyncSingle: (char: CharacterProfile) => void;
     onDeleteCharacter: (id: string, name: string) => void;
-    getTopRuns: (history: Record<string, number>) => number[];
+    getTopRuns: (history: Record<string, number>, m0Count?: number) => number[];
     getVaultSlots: (runs: number[]) => number[];
     getStatus: (vaultSlots: number[], currentRules: MythicRules) => { status: string; label: string; color: string };
     getCountHighKeys: (history: Record<string, number> | undefined) => string | number;
@@ -74,7 +74,7 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                         const displayClass = currentData.className || char.className;
                         const displayIlvl = currentData.ilvl || char.ilvl;
 
-                        const topRuns = getTopRuns(displayHistory);
+                        const topRuns = getTopRuns(displayHistory, displayM0);
                         const vaultSlots = getVaultSlots(topRuns);
                         const status = rules ? getStatus(vaultSlots, rules) : { status: 'pending', label: '-', color: 'text-gray-500' };
 
@@ -173,19 +173,29 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                 </td>
 
                                 <td className="py-2 px-3 text-center bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
-                                    <div className="flex flex-col items-center justify-center py-1.5 bg-black/60 border border-white/5 rounded-xl w-12 h-12 mx-auto shadow-inner group-hover:border-white/10 transition-colors">
-                                        <span className="text-xl font-black text-white drop-shadow-glow">
-                                            {displayM0}
-                                        </span>
-                                        <span className="text-[7px] uppercase tracking-widest text-midnight-600 font-black">M0</span>
-                                    </div>
+                                    {(() => {
+                                        const m0Pct = (displayM0 / 8) * 100;
+                                        let m0ColorClass = "text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]";
+                                        if (m0Pct >= 75) m0ColorClass = "text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]";
+                                        else if (m0Pct >= 47) m0ColorClass = "text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]";
+                                        else if (m0Pct >= 23) m0ColorClass = "text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]";
+
+                                        return (
+                                            <div className="flex flex-col items-center justify-center py-1.5 bg-black/60 border border-white/5 rounded-xl w-12 h-12 mx-auto shadow-inner group-hover:border-white/10 transition-colors">
+                                                <span className={clsx("text-xl font-black transition-colors duration-300", m0ColorClass)}>
+                                                    {displayM0}
+                                                </span>
+                                                <span className="text-[7px] uppercase tracking-widest text-midnight-600 font-black">M0</span>
+                                            </div>
+                                        );
+                                    })()}
                                 </td>
 
                                 <td className="py-2 px-3 bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex items-center justify-center gap-2">
                                         {[0, 1, 2].map(i => {
                                             const lvl = vaultSlots[i];
-                                            const isUnlocked = lvl > 0;
+                                            const isUnlocked = lvl !== -1 && lvl !== undefined;
                                             return (
                                                 <div
                                                     key={i}
@@ -200,9 +210,9 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                                     <span className="text-[7px] uppercase font-black text-midnight-600 leading-tight z-10">S{i + 1}</span>
                                                     <span className={clsx(
                                                         "text-xl font-black leading-none z-10 tracking-tighter",
-                                                        isUnlocked ? "text-white drop-shadow-glow" : "text-midnight-800"
+                                                        isUnlocked ? (lvl === 0 ? "text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]" : "text-white drop-shadow-glow") : "text-midnight-800"
                                                     )}>
-                                                        {isUnlocked ? lvl : '-'}
+                                                        {isUnlocked ? (lvl === 0 ? 'M0' : lvl) : '-'}
                                                     </span>
                                                 </div>
                                             );

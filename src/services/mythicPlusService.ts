@@ -550,20 +550,24 @@ export const mythicPlusService = {
     },
 
     // Helpers for UI
-    getTopRuns(history: Record<string, number>): number[] {
+    getTopRuns(history: Record<string, number>, m0Count: number = 0): number[] {
         const runs: number[] = [];
         Object.entries(history || {}).forEach(([level, count]) => {
             for (let i = 0; i < count; i++) runs.push(parseInt(level));
         });
+        // Agregar las M0 como nivel 0
+        for (let i = 0; i < m0Count; i++) {
+            runs.push(0);
+        }
         return runs.sort((a, b) => b - a).slice(0, 8);
     },
 
     getVaultSlots(runs: number[]): number[] {
         // Slots at 1, 4, 8 runs
         return [
-            runs.length >= 1 ? runs[0] : 0,
-            runs.length >= 4 ? runs[3] : 0,
-            runs.length >= 8 ? runs[7] : 0
+            runs.length >= 1 ? runs[0] : -1,
+            runs.length >= 4 ? runs[3] : -1,
+            runs.length >= 8 ? runs[7] : -1
         ];
     },
 
@@ -573,14 +577,14 @@ export const mythicPlusService = {
         if (!currentRules) return { status: 'unknown', label: 'Cargando...', color: 'text-gray-500' };
 
         const required = currentRules.requiredSlots || 1; // Default to 1 if not set
-        const totalSlots = vaultSlots.filter(l => l > 0).length;
+        const totalSlots = vaultSlots.filter(l => l !== -1).length;
 
         // Count slots that meet the specific level requirement for their position
         let validSlots = 0;
-        // Strictly check that the slot has a run ( > 0 ) AND exceeds level requirement
-        if (vaultSlots[0] > 0 && vaultSlots[0] >= currentRules.levelSlot1) validSlots++;
-        if (vaultSlots[1] > 0 && vaultSlots[1] >= currentRules.levelSlot2) validSlots++;
-        if (vaultSlots[2] > 0 && vaultSlots[2] >= currentRules.levelSlot3) validSlots++;
+        // Strictly check that the slot has a run ( > -1 ) AND exceeds level requirement
+        if (vaultSlots[0] !== -1 && vaultSlots[0] >= currentRules.levelSlot1) validSlots++;
+        if (vaultSlots[1] !== -1 && vaultSlots[1] >= currentRules.levelSlot2) validSlots++;
+        if (vaultSlots[2] !== -1 && vaultSlots[2] >= currentRules.levelSlot3) validSlots++;
 
         // Logic:
         // Completed: Met both Quantity AND Quality (implied by having enough valid slots)
