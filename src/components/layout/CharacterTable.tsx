@@ -175,9 +175,9 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                 <td className="py-2 px-3 text-center bg-black/40 border-y border-white/5 group-hover:bg-black/60 transition-colors">
                                     <div className="flex flex-col items-center justify-center py-1.5 bg-black/60 border border-white/5 rounded-xl w-12 h-12 mx-auto shadow-inner group-hover:border-white/10 transition-colors">
                                         <span className="text-xl font-black text-white drop-shadow-glow">
-                                            {displayM0 + Object.values(displayHistory).reduce((a, b) => a + b, 0)}
+                                            {displayM0}
                                         </span>
-                                        <span className="text-[7px] uppercase tracking-widest text-midnight-600 font-black">M0 + M+</span>
+                                        <span className="text-[7px] uppercase tracking-widest text-midnight-600 font-black">M0</span>
                                     </div>
                                 </td>
 
