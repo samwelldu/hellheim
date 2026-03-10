@@ -25,6 +25,10 @@ export const KeystonesPage: React.FC = () => {
     const [weeklyRange, setWeeklyRange] = useState<{ start: Date, end: Date } | null>(null);
     const [isPublishing, setIsPublishing] = useState(false);
 
+    // Tan: Estados para Sincronización Masiva Iterativa
+    const [isSyncingAll, setIsSyncingAll] = useState(false);
+    const [syncProgress, setSyncProgress] = useState(0);
+
     // Tan: Estados para el Historial
     const [selectedDate, setSelectedDate] = useState<string>(''); // YYYY-MM-DD
     const [historyDates, setHistoryDates] = useState<string[]>([]);
@@ -102,24 +106,55 @@ export const KeystonesPage: React.FC = () => {
     };
 
     const handleSyncAll = async () => {
-        if (!confirm("¿Sincronizar todos los personajes con Blizzard? Esto puede tomar un momento.")) return;
-        setLoading(true);
-        try {
-            // Get all chars first to have the list
-            const allChars = await mythicPlusService.getAllCharacters();
-            const promises = allChars.map(char =>
-                mythicPlusService.syncWithBlizzard(char.name, char.realm, char.id)
-                    .catch(e => console.error(`Failed to sync ${char.name}:`, e))
-            );
+        if (!confirm("¿Sincronizar todos los personajes con Blizzard? Esto puede tomar varios minutos. Por favor no cierres la ventana.")) return;
 
-            await Promise.all(promises);
-            await fetchData(); // Refresh data
+        setIsSyncingAll(true);
+        setSyncProgress(0);
+
+        try {
+            // Obtenemos listado base
+            const allChars = await mythicPlusService.getAllCharacters();
+            const totalChars = allChars.length;
+
+            if (totalChars === 0) {
+                showToast("No hay personajes para sincronizar.", 'info');
+                setIsSyncingAll(false);
+                return;
+            }
+
+            let syncCount = 0;
+            // Tan: Bucle secuencial para no saturar requests y mostrar progreso
+            for (const char of allChars) {
+                try {
+                    // Actualizamos Set localmente para feedback en la tabla también
+                    setSyncingIds(prev => new Set(prev).add(char.id));
+
+                    await mythicPlusService.syncWithBlizzard(char.name, char.realm, char.id);
+
+                    syncCount++;
+                    const percent = Math.round((syncCount / totalChars) * 100);
+                    setSyncProgress(percent);
+
+                } catch (e) {
+                    console.error(`Failed to sync ${char.name}:`, e);
+                } finally {
+                    setSyncingIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(char.id);
+                        return next;
+                    });
+                }
+            }
+
+            // Recargamos los datos al finalizar para refrescar la tabla
+            await fetchData();
             showToast("Sincronización masiva completada.", 'success');
         } catch (error) {
             console.error("Sync all error:", error);
-            showToast("Error en sincronización masiva description.", 'error');
+            showToast("Error en sincronización masiva.", 'error');
         } finally {
-            setLoading(false);
+            setIsSyncingAll(false);
+            setSyncProgress(0);
         }
     };
 
@@ -245,10 +280,18 @@ export const KeystonesPage: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={handleSyncAll}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-midnight-800 hover:bg-midnight-700 text-white rounded-lg border border-midnight-600 transition-all font-bold shadow-lg text-xs"
+                                    disabled={isSyncingAll}
+                                    className="relative flex items-center justify-center gap-1.5 px-3 py-1.5 bg-midnight-800 hover:bg-midnight-700 text-white rounded-lg border border-midnight-600 transition-all font-bold shadow-lg text-xs overflow-hidden min-w-[40px] h-[34px]"
+                                    title={isSyncingAll ? "Sincronizando..." : "Sincronizar Todo"}
                                 >
-                                    <RotateCw size={14} />
-                                    Sync Todo
+                                    {isSyncingAll && (
+                                        <div
+                                            className="absolute top-0 left-0 bottom-0 bg-void/30 transition-all duration-300 pointer-events-none"
+                                            style={{ width: `${syncProgress}%` }}
+                                        />
+                                    )}
+                                    <RotateCw size={14} className={isSyncingAll ? "animate-spin z-10" : "z-10"} />
+                                    {isSyncingAll && <span className="z-10 text-[10px] tabular-nums font-black">{syncProgress}%</span>}
                                 </button>
 
                                 {hasPending && (
@@ -374,6 +417,21 @@ export const KeystonesPage: React.FC = () => {
                                     placeholder="Min"
                                 />
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Minimum iLvl Input */}
+                    <div>
+                        <label className="block text-xs font-bold text-void-light uppercase mb-3 tracking-widest">Requisito General</label>
+                        <div className="w-1/3 pr-2">
+                            <label className="block text-[10px] font-bold text-midnight-500 uppercase mb-1.5 ml-1">Item Level Mínimo</label>
+                            <input
+                                type="number"
+                                value={editableRules.minItemLevel || ''}
+                                onChange={(e) => setEditableRules({ ...editableRules, minItemLevel: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-midnight-950 border border-midnight-700 rounded p-3 text-white font-mono text-center text-xl focus:border-void-light focus:outline-none"
+                                placeholder="Ej: 615"
+                            />
                         </div>
                     </div>
 

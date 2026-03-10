@@ -16,7 +16,7 @@ interface CharacterTableProps {
     onDeleteCharacter: (id: string, name: string) => void;
     getTopRuns: (history: Record<string, number>, m0Count?: number) => number[];
     getVaultSlots: (runs: number[]) => number[];
-    getStatus: (vaultSlots: number[], currentRules: MythicRules) => { status: string; label: string; color: string };
+    getStatus: (vaultSlots: number[], currentRules: MythicRules, charIlvl?: number) => { status: string; label: string; color: string };
     getCountHighKeys: (history: Record<string, number> | undefined) => string | number;
     isHistoricalView?: boolean;
     mainCharacter?: any;
@@ -76,7 +76,10 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
 
                         const topRuns = getTopRuns(displayHistory, displayM0);
                         const vaultSlots = getVaultSlots(topRuns);
-                        const status = rules ? getStatus(vaultSlots, rules) : { status: 'pending', label: '-', color: 'text-gray-500' };
+                        const status = rules ? getStatus(vaultSlots, rules, displayIlvl) : { status: 'pending', label: '-', color: 'text-gray-500' };
+
+                        // Tan: Control visual si no cumple el item level minimo
+                        const failsIlvl = rules && rules.minItemLevel && displayIlvl < rules.minItemLevel;
 
                         return (
                             <tr
@@ -137,7 +140,11 @@ export const CharacterTable: React.FC<CharacterTableProps> = ({
                                             </div>
                                             <div className="text-xs font-black text-white flex items-center gap-2 mt-0.5">
                                                 <span className="text-[8px] uppercase tracking-[0.2em] text-midnight-600 font-black">Item Level</span>
-                                                <span className="text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]">{displayIlvl}</span>
+                                                <span className={clsx(
+                                                    failsIlvl ? "text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.3)] animate-pulse-subtle" : "text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.3)]"
+                                                )}>
+                                                    {displayIlvl}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

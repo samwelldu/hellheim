@@ -129,6 +129,7 @@ export interface MythicRules {
     levelSlot2: number;
     levelSlot3: number;
     requiredSlots?: number;
+    minItemLevel?: number; // Tan: Nueva regla de nivel de objeto
 }
 
 export const mythicPlusService = {
@@ -171,7 +172,8 @@ export const mythicPlusService = {
             requiredSlots: 1,
             levelSlot1: 2,
             levelSlot2: 2,
-            levelSlot3: 2
+            levelSlot3: 2,
+            minItemLevel: 0
         };
     },
 
@@ -603,7 +605,7 @@ export const mythicPlusService = {
 
 
 
-    getStatus(vaultSlots: number[], currentRules: MythicRules): { status: string; label: string; color: string } {
+    getStatus(vaultSlots: number[], currentRules: MythicRules, charIlvl: number = 0): { status: string; label: string; color: string } {
         if (!currentRules) return { status: 'unknown', label: 'Cargando...', color: 'text-gray-500' };
 
         const required = currentRules.requiredSlots || 1; // Default to 1 if not set
@@ -616,16 +618,16 @@ export const mythicPlusService = {
         if (vaultSlots[1] !== -1 && vaultSlots[1] >= currentRules.levelSlot2) validSlots++;
         if (vaultSlots[2] !== -1 && vaultSlots[2] >= currentRules.levelSlot3) validSlots++;
 
+        const meetsIlvlRule = !currentRules.minItemLevel || charIlvl >= currentRules.minItemLevel;
+
         // Logic:
-        // Completed: Met both Quantity AND Quality (implied by having enough valid slots)
-        if (validSlots >= required) {
+        // Completed: Met both Quantity AND Quality AND Ilvl
+        if (validSlots >= required && meetsIlvlRule) {
             return { status: 'complete', label: 'COMPLETADO', color: 'green' };
         }
 
-        // Regular: Met EITHER Quantity OR Quality (at least one valid slot)
-        // "Quality" interpretation: having at least one slot that meets level, implies user is doing high keys but maybe not enough of them.
-        // "Quantity" interpretation: having enough slots but low level.
-        if (totalSlots >= required || validSlots > 0) {
+        // Regular: Met EITHER Quantity OR Quality OR missed Ilvl but had runs
+        if (totalSlots >= required || validSlots > 0 || (validSlots >= required && !meetsIlvlRule)) {
             return { status: 'regular', label: 'REGULAR', color: 'yellow' };
         }
 
