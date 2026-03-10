@@ -59,11 +59,28 @@ export function getWeeklyReset(region: string = 'us'): number {
     const now = new Date();
     const day = now.getUTCDay(); // 0 (Sun) - 6 (Sat)
 
-    // US Reset: Tuesday 15:00 UTC
     // EU Reset: Wednesday 07:00 UTC
-    // Logic: Find the most recent reset
-    let resetDay = region === 'eu' ? 3 : 2; // Wed or Tue
-    let resetHour = region === 'eu' ? 7 : 15;
+    if (region === 'eu') {
+        const resetDate = new Date(now);
+        resetDate.setUTCDate(now.getUTCDate() - ((day - 3 + 7) % 7));
+        resetDate.setUTCHours(7, 0, 0, 0);
+        if (now.getTime() < resetDate.getTime()) {
+            resetDate.setUTCDate(resetDate.getUTCDate() - 7);
+        }
+        return resetDate.getTime();
+    }
+
+    // US Reset: Martes a las 11:00 AM hora Chile
+    // Tan: Calculamos el reset basado exactamente en la hora de Chile para evitar fallos por cambio de horario
+    const utcStr = now.toLocaleString('en-US', { timeZone: 'UTC' });
+    const santiagoStr = now.toLocaleString('en-US', { timeZone: 'America/Santiago' });
+    const tzUtc = new Date(utcStr);
+    const tzSantiago = new Date(santiagoStr);
+    const offsetHours = Math.round((tzSantiago.getTime() - tzUtc.getTime()) / (1000 * 60 * 60));
+
+    // Si reset es 11 AM en Chile, y offset es -3, UTC hour es 14. Si es -4, UTC hour es 15.
+    const resetHour = 11 - offsetHours;
+    const resetDay = 2; // Martes
 
     const resetDate = new Date(now);
     resetDate.setUTCDate(now.getUTCDate() - ((day - resetDay + 7) % 7));
@@ -83,9 +100,17 @@ export function getWeeklyRange(dateStr?: string, region: string = 'us'): { start
     const day = reference.getUTCDay();
     const resetDay = region === 'eu' ? 3 : 2;
 
+    // Tan: Cálculo dinámico de hora para Chile (Mismo que getWeeklyReset)
+    const utcStr = reference.toLocaleString('en-US', { timeZone: 'UTC' });
+    const santiagoStr = reference.toLocaleString('en-US', { timeZone: 'America/Santiago' });
+    const tzUtc = new Date(utcStr);
+    const tzSantiago = new Date(santiagoStr);
+    const offsetHours = Math.round((tzSantiago.getTime() - tzUtc.getTime()) / (1000 * 60 * 60));
+    const usResetHour = 11 - offsetHours;
+
     const start = new Date(reference);
     start.setUTCDate(reference.getUTCDate() - ((day - resetDay + 7) % 7));
-    start.setUTCHours(region === 'eu' ? 7 : 15, 0, 0, 0);
+    start.setUTCHours(region === 'eu' ? 7 : usResetHour, 0, 0, 0);
 
     const end = new Date(start);
     end.setUTCDate(start.getUTCDate() + 7);
@@ -262,10 +287,15 @@ export const mythicPlusService = {
         let count = 0;
         try {
             const dungeonsData = await blizzardService.getCharacterDungeons(realm, name, region);
-            if (dungeonsData && dungeonsData.expansions) {
-                // Tan: Iteramos sobre todas las expansiones, pero mayormente afectará a la actual
-                for (const expansion of dungeonsData.expansions || []) {
-                    for (const instance of expansion.instances || []) {
+            if (dungeonsData && dungeonsData.expansions && dungeonsData.expansions.length > 0) {
+                // Tan: Filtramos para agarrar solo la expansión más reciente (The War Within o superior)
+                // Esto previene que runs antiguas para transfiguración cuenten como M0 válidas para progreso
+                const latestExpansion = dungeonsData.expansions.reduce((prev: any, current: any) => {
+                    return (prev.expansion?.id > current.expansion?.id) ? prev : current;
+                });
+
+                if (latestExpansion && latestExpansion.instances) {
+                    for (const instance of latestExpansion.instances || []) {
                         for (const mode of instance.modes || []) {
                             // Tan: Buscamos dificultad "Mythic" por su type para evitar problemas de idioma (Mítico/Mythic)
                             const diffType = mode.difficulty?.type || '';
