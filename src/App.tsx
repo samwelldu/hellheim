@@ -20,6 +20,7 @@ import { AdminConfigPage } from './pages/AdminConfigPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { Updates } from './UI/módulos/Actualizaciones/Updates';
 import { WowheadGuia } from './UI/módulos/WowheadGuia/WowheadGuia';
+import { ComoFunciona } from './UI/módulos/ComoFunciona/ComoFunciona';
 
 function App() {
   return (
@@ -87,6 +88,14 @@ function App() {
               <PrivateRoute>
                 <Layout>
                   <WowheadGuia />
+                </Layout>
+              </PrivateRoute>
+            } />
+
+            <Route path="/como-funciona" element={
+              <PrivateRoute>
+                <Layout>
+                  <ComoFunciona />
                 </Layout>
               </PrivateRoute>
             } />

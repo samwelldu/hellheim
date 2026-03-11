@@ -14,7 +14,8 @@ import {
     FileText,
     Home,
     History,
-    BookOpen
+    BookOpen,
+    Info
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +27,7 @@ import { cmsService } from '../../services/cmsService';
 const navItems = [
     { name: 'Página principal', path: '/', icon: Home },
     { name: 'General', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Cómo Funciona', path: '/como-funciona', icon: Info },
     { name: 'Míticas+ (M+)', path: '/mythicplus', icon: Shield },
     { name: 'Asistencia', path: '/attendance', icon: Users },
     { name: 'Cuota', path: '/quota', icon: Scroll },
