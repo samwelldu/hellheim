@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { Shield, RefreshCw, X, Settings, RotateCw, FilterX, CheckCircle } from 'lucide-react';
+import { Shield, RefreshCw, X, Settings, RotateCw, FilterX, CheckCircle, Key, Package, Gavel } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { mythicPlusService, getWeeklyRange } from '../services/mythicPlusService';
 import type { CharacterProfile, MythicRules } from '../services/mythicPlusService';
@@ -327,6 +327,34 @@ export const KeystonesPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Tan: Panel de Reglas Activas */}
+            {rules && !isHistoricalView && (
+                <div className="flex flex-wrap items-center gap-4 glass p-4 rounded-xl border border-white/5 animate-fade-in z-40 relative">
+                    <span className="text-xs font-black text-midnight-400 uppercase tracking-widest mr-2">Requisitos De La Semana:</span>
+                    
+                    <div className="flex items-center gap-2 bg-midnight-900/50 px-3 py-1.5 rounded-lg border border-midnight-700/50" title="Cantidad de cofres requeridos en la bóveda">
+                        <Package size={14} className={rules.requiredSlots ? "text-amber-400" : "text-midnight-500"} />
+                        <span className="text-xs font-bold text-white">
+                            {rules.requiredSlots ? `${rules.requiredSlots} Cofre${rules.requiredSlots > 1 ? 's' : ''}` : <span className="text-midnight-500">Opcional</span>}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-midnight-900/50 px-3 py-1.5 rounded-lg border border-midnight-700/50" title="Nivel mínimo de piedra mítica requerido en el primer cofre">
+                        <Key size={14} className={rules.levelSlot1 ? "text-void-light" : "text-midnight-500"} />
+                        <span className="text-xs font-bold text-white">
+                            {rules.levelSlot1 ? (rules.levelSlot1 === 0 ? 'Mítica 0' : `Mítica +${rules.levelSlot1}`) : <span className="text-midnight-500">Sin nivel</span>}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-midnight-900/50 px-3 py-1.5 rounded-lg border border-midnight-700/50" title="Nivel de Objeto general exigido">
+                        <Gavel size={14} className={rules.minItemLevel ? "text-cyan-400" : "text-midnight-500"} />
+                        <span className="text-xs font-bold text-white">
+                            {rules.minItemLevel ? `${rules.minItemLevel} iLvl` : <span className="text-midnight-500">Sin iLvl max</span>}
+                        </span>
+                    </div>
+                </div>
+            )}
+
             <CharacterTable
                 characters={filteredCharacters}
                 loading={loading}
@@ -363,16 +391,21 @@ export const KeystonesPage: React.FC = () => {
 
                     {/* Required Chests Selector */}
                     <div>
-                        <label className="block text-xs font-bold text-midnight-400 uppercase mb-3">Cofres Exigidos por Semana</label>
+                        <label className="block text-xs font-bold text-midnight-400 uppercase mb-3">
+                            Cofres Exigidos por Semana <span className="text-[9px] text-midnight-500 ml-2 font-normal">(Haz click en uno activo para deseleccionarlo)</span>
+                        </label>
                         <div className="grid grid-cols-3 gap-3">
                             {[1, 2, 3].map(num => (
                                 <button
                                     key={num}
                                     type="button"
-                                    onClick={() => setEditableRules({ ...editableRules, requiredSlots: num })}
+                                    onClick={() => setEditableRules({ 
+                                        ...editableRules, 
+                                        requiredSlots: editableRules.requiredSlots === num ? 0 : num 
+                                    })}
                                     className={clsx(
                                         "py-3 rounded-lg font-bold text-xl border transition-all",
-                                        (editableRules.requiredSlots || 1) === num
+                                        (editableRules.requiredSlots || 0) === num
                                             ? "bg-void border-void-light text-white shadow-lg shadow-void/20"
                                             : "bg-midnight-950 border-midnight-700 text-midnight-500 hover:border-midnight-500 hover:text-midnight-300"
                                     )}
