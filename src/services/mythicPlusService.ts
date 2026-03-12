@@ -557,19 +557,24 @@ export const mythicPlusService = {
                     ];
 
                     const rulesDoc = await getDoc(doc(db, 'config', 'mythic_rules'));
-                    const rules = rulesDoc.exists() ? rulesDoc.data() as MythicRules : { requiredSlots: 1, levelSlot1: 2, levelSlot2: 2, levelSlot3: 2, minItemLevel: 0 };
+                    const rulesData = rulesDoc.exists() ? rulesDoc.data() : { requiredSlots: 1, levelSlot1: 2, levelSlot2: 2, levelSlot3: 2, minItemLevel: 0 };
                     
-                    const charIlvl = char.pendingData.ilvl || 0;
+                    const reqSlot1 = parseInt(rulesData.levelSlot1 || '2', 10);
+                    const reqSlot2 = parseInt(rulesData.levelSlot2 || '2', 10);
+                    const reqSlot3 = parseInt(rulesData.levelSlot3 || '2', 10);
+                    const required = parseInt(rulesData.requiredSlots || '1', 10);
+                    const minItemLevel = parseInt(rulesData.minItemLevel || '0', 10);
 
-                    const required = rules.requiredSlots || 1;
+                    const charIlvl = parseInt((char.pendingData.ilvl || 0).toString(), 10);
+
                     const totalSlots = vaultSlots.filter(l => l !== -1).length;
 
                     let validSlots = 0;
-                    if (vaultSlots[0] !== -1 && vaultSlots[0] >= rules.levelSlot1) validSlots++;
-                    if (vaultSlots[1] !== -1 && vaultSlots[1] >= rules.levelSlot2) validSlots++;
-                    if (vaultSlots[2] !== -1 && vaultSlots[2] >= rules.levelSlot3) validSlots++;
+                    if (vaultSlots[0] !== -1 && vaultSlots[0] >= reqSlot1) validSlots++;
+                    if (vaultSlots[1] !== -1 && vaultSlots[1] >= reqSlot2) validSlots++;
+                    if (vaultSlots[2] !== -1 && vaultSlots[2] >= reqSlot3) validSlots++;
 
-                    const meetsIlvlRule = !rules.minItemLevel || charIlvl >= rules.minItemLevel;
+                    const meetsIlvlRule = !minItemLevel || charIlvl >= minItemLevel;
 
                     let mplusPct = 0;
                     if (validSlots >= required && meetsIlvlRule) {
@@ -638,17 +643,23 @@ export const mythicPlusService = {
     getStatus(vaultSlots: number[], currentRules: MythicRules, charIlvl: number = 0): { status: string; label: string; color: string } {
         if (!currentRules) return { status: 'unknown', label: 'Cargando...', color: 'text-gray-500' };
 
-        const required = currentRules.requiredSlots || 1; // Default to 1 if not set
+        const required = parseInt((currentRules.requiredSlots || 1).toString(), 10);
+        const reqSlot1 = parseInt((currentRules.levelSlot1 || 2).toString(), 10);
+        const reqSlot2 = parseInt((currentRules.levelSlot2 || 2).toString(), 10);
+        const reqSlot3 = parseInt((currentRules.levelSlot3 || 2).toString(), 10);
+        const minItemLevel = parseInt((currentRules.minItemLevel || 0).toString(), 10);
+        const pIlvl = parseInt((charIlvl || 0).toString(), 10);
+
         const totalSlots = vaultSlots.filter(l => l !== -1).length;
 
         // Count slots that meet the specific level requirement for their position
         let validSlots = 0;
         // Strictly check that the slot has a run ( > -1 ) AND exceeds level requirement
-        if (vaultSlots[0] !== -1 && vaultSlots[0] >= currentRules.levelSlot1) validSlots++;
-        if (vaultSlots[1] !== -1 && vaultSlots[1] >= currentRules.levelSlot2) validSlots++;
-        if (vaultSlots[2] !== -1 && vaultSlots[2] >= currentRules.levelSlot3) validSlots++;
+        if (vaultSlots[0] !== -1 && vaultSlots[0] >= reqSlot1) validSlots++;
+        if (vaultSlots[1] !== -1 && vaultSlots[1] >= reqSlot2) validSlots++;
+        if (vaultSlots[2] !== -1 && vaultSlots[2] >= reqSlot3) validSlots++;
 
-        const meetsIlvlRule = !currentRules.minItemLevel || charIlvl >= currentRules.minItemLevel;
+        const meetsIlvlRule = !minItemLevel || pIlvl >= minItemLevel;
 
         // Logic:
         // Completed: Met both Quantity AND Quality AND Ilvl

@@ -220,22 +220,28 @@ export const Dashboard: React.FC = () => {
                 }
 
                 // Slots en 1, 4, 8 runs
-                const valSlot1 = sortedRuns.length >= 1 ? sortedRuns[0] : -1;
-                const valSlot2 = sortedRuns.length >= 4 ? sortedRuns[3] : -1;
-                const valSlot3 = sortedRuns.length >= 8 ? sortedRuns[7] : -1;
+                const vaultSlots = [
+                    sortedRuns.length >= 1 ? sortedRuns[0] : -1,
+                    sortedRuns.length >= 4 ? sortedRuns[3] : -1,
+                    sortedRuns.length >= 8 ? sortedRuns[7] : -1
+                ];
 
                 const rules = metadata.mythicRules as any;
-                let validSlots = 0;
-                if (valSlot1 !== -1 && valSlot1 >= (rules.levelSlot1 || 2)) validSlots++;
-                if (valSlot2 !== -1 && valSlot2 >= (rules.levelSlot2 || 2)) validSlots++;
-                if (valSlot3 !== -1 && valSlot3 >= (rules.levelSlot3 || 2)) validSlots++;
+                const reqSlot1 = parseInt(rules.levelSlot1 || '2', 10);
+                const reqSlot2 = parseInt(rules.levelSlot2 || '2', 10);
+                const reqSlot3 = parseInt(rules.levelSlot3 || '2', 10);
 
-                const required = rules.requiredSlots || 1;
-                const minItemLevel = rules.minItemLevel || 0;
-                const charIlvl = mplus.ilvl || 0;
+                let validSlots = 0;
+                if (vaultSlots[0] !== -1 && vaultSlots[0] >= reqSlot1) validSlots++;
+                if (vaultSlots[1] !== -1 && vaultSlots[1] >= reqSlot2) validSlots++;
+                if (vaultSlots[2] !== -1 && vaultSlots[2] >= reqSlot3) validSlots++;
+
+                const required = parseInt(rules.requiredSlots || '1', 10);
+                const minItemLevel = parseInt(rules.minItemLevel || '0', 10);
+                const charIlvl = parseInt((mplus.ilvl || 0).toString(), 10);
 
                 const meetsIlvlRule = !minItemLevel || charIlvl >= minItemLevel;
-                const totalSlots = [valSlot1, valSlot2, valSlot3].filter(l => l !== -1).length;
+                const totalSlots = vaultSlots.filter(l => l !== -1).length;
 
                 // Tan: Cálculo Estricto alineado con Míticas+
                 if (validSlots >= required && meetsIlvlRule) {
