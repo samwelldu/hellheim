@@ -6,6 +6,8 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getClassColor } from '../utils/wowClasses';
 import { useAuth } from '../context/AuthContext';
+import { mythicPlusService } from '../services/mythicPlusService';
+import type { MythicRules } from '../services/mythicPlusService';
 
 interface AttendanceProfile {
     id: string;
@@ -66,14 +68,19 @@ export const Dashboard: React.FC = () => {
     const { data: uploadData, loading: loadingUploads } = useCollection<QuotaUpload>('quota_uploads');
 
     // Metadata & Season Settings
-    const [metadata, setMetadata] = useState({
+    const [metadata, setMetadata] = useState<{
+        totalRaids: number;
+        raidQuota: number;
+        mythicRules: MythicRules;
+    }>({
         totalRaids: 0,
         raidQuota: 0,
         mythicRules: {
             requiredSlots: 1,
             levelSlot1: 2,
             levelSlot2: 2,
-            levelSlot3: 2
+            levelSlot3: 2,
+            minItemLevel: 0
         }
     });
     const [season, setSeason] = useState<SeasonSettings>({
@@ -100,11 +107,12 @@ export const Dashboard: React.FC = () => {
                 setMetadata(prev => ({
                     ...prev,
                     mythicRules: {
-                        requiredSlots: data.requiredSlots || 1,
-                        levelSlot1: data.levelSlot1 || 2,
-                        levelSlot2: data.levelSlot2 || 2,
-                        levelSlot3: data.levelSlot3 || 2
-                    }
+                        requiredSlots: data.requiredSlots ?? 1,
+                        levelSlot1: data.levelSlot1 ?? 2,
+                        levelSlot2: data.levelSlot2 ?? 2,
+                        levelSlot3: data.levelSlot3 ?? 2,
+                        minItemLevel: data.minItemLevel ?? 0
+                    } as MythicRules
                 }));
             }
         });
@@ -207,49 +215,21 @@ export const Dashboard: React.FC = () => {
             let mplusPct = 0;
             if (activeModules[1] && mplus) {
                 const history = mplus.weeklyHistory || {};
-                const runs: number[] = [];
-                Object.entries(history).forEach(([level, count]) => {
-                    for (let i = 0; i < (count as number); i++) runs.push(parseInt(level));
-                });
-                const sortedRuns = runs.sort((a, b) => b - a);
-
-                // Tan: Añadimos las M0 al array de runs
                 const m0Count = mplus.mythic0Count || 0;
-                for (let i = 0; i < m0Count; i++) {
-                    sortedRuns.push(0);
-                }
-
-                // Slots en 1, 4, 8 runs
-                const vaultSlots = [
-                    sortedRuns.length >= 1 ? sortedRuns[0] : -1,
-                    sortedRuns.length >= 4 ? sortedRuns[3] : -1,
-                    sortedRuns.length >= 8 ? sortedRuns[7] : -1
-                ];
-
-                const rules = metadata.mythicRules as any;
-                const reqSlot1 = parseInt(rules.levelSlot1 || '2', 10);
-                const reqSlot2 = parseInt(rules.levelSlot2 || '2', 10);
-                const reqSlot3 = parseInt(rules.levelSlot3 || '2', 10);
-
-                let validSlots = 0;
-                if (vaultSlots[0] !== -1 && vaultSlots[0] >= reqSlot1) validSlots++;
-                if (vaultSlots[1] !== -1 && vaultSlots[1] >= reqSlot2) validSlots++;
-                if (vaultSlots[2] !== -1 && vaultSlots[2] >= reqSlot3) validSlots++;
-
-                const required = parseInt(rules.requiredSlots || '1', 10);
-                const minItemLevel = parseInt(rules.minItemLevel || '0', 10);
+                
+                const topRuns = mythicPlusService.getTopRuns(history, m0Count);
+                const vaultSlots = mythicPlusService.getVaultSlots(topRuns);
+                
+                const rules = metadata.mythicRules as MythicRules;
                 const charIlvl = parseInt((mplus.ilvl || 0).toString(), 10);
-
-                const meetsIlvlRule = !minItemLevel || charIlvl >= minItemLevel;
-                const totalSlots = vaultSlots.filter(l => l !== -1).length;
-
-                // Tan: Cálculo Estricto alineado con Míticas+
-                if (validSlots >= required && meetsIlvlRule) {
+                
+                // Tan: Usamos exactamente el getStatus original para asegurar 100% de paridad
+                const calcStatus = mythicPlusService.getStatus(vaultSlots, rules, charIlvl);
+                
+                if (calcStatus.status === 'complete') {
                     mplusPct = 100;
-                } else if (totalSlots >= required || validSlots > 0 || (validSlots >= required && !meetsIlvlRule)) {
-                    mplusPct = 50; // Parcial
-                } else {
-                    mplusPct = 0;
+                } else if (calcStatus.status === 'regular') {
+                    mplusPct = 50;
                 }
             }
 

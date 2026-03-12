@@ -161,7 +161,14 @@ export const mythicPlusService = {
             const snapshot = await getDoc(docRef);
 
             if (snapshot.exists()) {
-                return snapshot.data() as MythicRules;
+                const rulesRaw = snapshot.data();
+                return {
+                    requiredSlots: rulesRaw.requiredSlots ?? 1,
+                    levelSlot1: rulesRaw.levelSlot1 ?? 2,
+                    levelSlot2: rulesRaw.levelSlot2 ?? 2,
+                    levelSlot3: rulesRaw.levelSlot3 ?? 2,
+                    minItemLevel: rulesRaw.minItemLevel ?? 0
+                } as MythicRules;
             }
         } catch (error) {
             console.error("Error fetching rules:", error);
@@ -476,6 +483,18 @@ export const mythicPlusService = {
         const attendanceMetaDoc = await getDoc(doc(db, 'attendance_roster', 'metadata'));
         const totalRaidsCount = attendanceMetaDoc.exists() ? attendanceMetaDoc.data().totalRaids || 0 : 0;
 
+        // Tan: Dinamismo de temporada para Histórico
+        const seasonDoc = await getDoc(doc(db, 'config', 'season'));
+        let seasonActiveModules = { attendance: true, mythicPlus: true, quota: true };
+        if (seasonDoc.exists()) {
+            const sd = seasonDoc.data().modules;
+            if (sd) {
+                seasonActiveModules.attendance = sd.attendance?.active ?? true;
+                seasonActiveModules.mythicPlus = sd.mythicPlus?.active ?? true;
+                seasonActiveModules.quota = sd.quota?.active ?? true;
+            }
+        }
+
         let count = 0;
 
         for (const d of snapshot.docs) {
@@ -538,56 +557,46 @@ export const mythicPlusService = {
                     const attendPct = totalRaidsCount > 0 ? (currentAttendance / totalRaidsCount) * 100 : 0;
 
                     const history = char.pendingData.weeklyHistory || {};
-                    const runs: number[] = [];
-                    Object.entries(history).forEach(([level, count]) => {
-                        for (let i = 0; i < (count as number); i++) runs.push(parseInt(level));
-                    });
-                    const sortedRuns = runs.sort((a, b) => b - a);
-
                     const m0Count = char.pendingData.mythic0Count || 0;
-                    for (let i = 0; i < m0Count; i++) {
-                        sortedRuns.push(0);
-                    }
-
-                    // Slots at 1, 4, 8 runs
-                    const vaultSlots = [
-                        sortedRuns.length >= 1 ? sortedRuns[0] : -1,
-                        sortedRuns.length >= 4 ? sortedRuns[3] : -1,
-                        sortedRuns.length >= 8 ? sortedRuns[7] : -1
-                    ];
+                    const topRuns = this.getTopRuns(history, m0Count);
+                    const vaultSlots = this.getVaultSlots(topRuns);
 
                     const rulesDoc = await getDoc(doc(db, 'config', 'mythic_rules'));
-                    const rulesData = rulesDoc.exists() ? rulesDoc.data() : { requiredSlots: 1, levelSlot1: 2, levelSlot2: 2, levelSlot3: 2, minItemLevel: 0 };
+                    const rulesRaw = rulesDoc.exists() ? rulesDoc.data() : {};
+                    const rulesData = {
+                        requiredSlots: rulesRaw.requiredSlots ?? 1,
+                        levelSlot1: rulesRaw.levelSlot1 ?? 2,
+                        levelSlot2: rulesRaw.levelSlot2 ?? 2,
+                        levelSlot3: rulesRaw.levelSlot3 ?? 2,
+                        minItemLevel: rulesRaw.minItemLevel ?? 0
+                    };
                     
-                    const reqSlot1 = parseInt(rulesData.levelSlot1 || '2', 10);
-                    const reqSlot2 = parseInt(rulesData.levelSlot2 || '2', 10);
-                    const reqSlot3 = parseInt(rulesData.levelSlot3 || '2', 10);
-                    const required = parseInt(rulesData.requiredSlots || '1', 10);
-                    const minItemLevel = parseInt(rulesData.minItemLevel || '0', 10);
-
                     const charIlvl = parseInt((char.pendingData.ilvl || 0).toString(), 10);
-
-                    const totalSlots = vaultSlots.filter(l => l !== -1).length;
-
-                    let validSlots = 0;
-                    if (vaultSlots[0] !== -1 && vaultSlots[0] >= reqSlot1) validSlots++;
-                    if (vaultSlots[1] !== -1 && vaultSlots[1] >= reqSlot2) validSlots++;
-                    if (vaultSlots[2] !== -1 && vaultSlots[2] >= reqSlot3) validSlots++;
-
-                    const meetsIlvlRule = !minItemLevel || charIlvl >= minItemLevel;
-
+                    const calcStatus = this.getStatus(vaultSlots, rulesData as MythicRules, charIlvl);
+                    
                     let mplusPct = 0;
-                    if (validSlots >= required && meetsIlvlRule) {
+                    if (calcStatus.status === 'complete') {
                         mplusPct = 100;
-                    } else if (totalSlots >= required || validSlots > 0 || (validSlots >= required && !meetsIlvlRule)) {
-                        mplusPct = 50; // Parcial
+                    } else if (calcStatus.status === 'regular') {
+                        mplusPct = 50;
                     }
 
                     const quotaPct = raidQuotaAmount > 0
                         ? (currentGold >= 0 ? 100 : Math.max(0, Math.round(100 + (currentGold / raidQuotaAmount * 100))))
                         : 100;
 
-                    const globalPerf = Math.round((attendPct + mplusPct + quotaPct) / 3);
+                    const activeModulesArray = [
+                        seasonActiveModules.attendance,
+                        seasonActiveModules.mythicPlus,
+                        seasonActiveModules.quota
+                    ];
+                    const activeDivisor = activeModulesArray.filter(a => a).length || 1;
+
+                    const globalPerf = Math.round((
+                        (activeModulesArray[0] ? attendPct : 0) + 
+                        (activeModulesArray[1] ? mplusPct : 0) + 
+                        (activeModulesArray[2] ? quotaPct : 0)
+                    ) / activeDivisor);
 
                     let perfColor = 'red';
                     if (globalPerf >= 80) perfColor = 'green';
@@ -643,14 +652,17 @@ export const mythicPlusService = {
     getStatus(vaultSlots: number[], currentRules: MythicRules, charIlvl: number = 0): { status: string; label: string; color: string } {
         if (!currentRules) return { status: 'unknown', label: 'Cargando...', color: 'text-gray-500' };
 
-        const required = parseInt((currentRules.requiredSlots || 1).toString(), 10);
-        const reqSlot1 = parseInt((currentRules.levelSlot1 || 2).toString(), 10);
-        const reqSlot2 = parseInt((currentRules.levelSlot2 || 2).toString(), 10);
-        const reqSlot3 = parseInt((currentRules.levelSlot3 || 2).toString(), 10);
-        const minItemLevel = parseInt((currentRules.minItemLevel || 0).toString(), 10);
+        const required = parseInt((currentRules.requiredSlots ?? 1).toString(), 10);
+        const reqSlot1 = parseInt((currentRules.levelSlot1 ?? 2).toString(), 10);
+        const reqSlot2 = parseInt((currentRules.levelSlot2 ?? 2).toString(), 10);
+        const reqSlot3 = parseInt((currentRules.levelSlot3 ?? 2).toString(), 10);
+        const minItemLevel = parseInt((currentRules.minItemLevel ?? 0).toString(), 10);
         const pIlvl = parseInt((charIlvl || 0).toString(), 10);
 
         const totalSlots = vaultSlots.filter(l => l !== -1).length;
+
+        // Tan DEBUG: Loggear toda la validación para encontrar el bug del usuario (borrar en producción)
+        console.log(`[Mythic+] Eval: reqSlots=${required}, minIlvl=${minItemLevel}, charIlvl=${pIlvl}. Vault: [${vaultSlots.join(',')}], rules: [${reqSlot1},${reqSlot2},${reqSlot3}]`);
 
         // Count slots that meet the specific level requirement for their position
         let validSlots = 0;
