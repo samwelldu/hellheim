@@ -206,7 +206,6 @@ export const Dashboard: React.FC = () => {
 
             let mplusPct = 0;
             if (activeModules[1] && mplus) {
-                // Tan: Reutilizamos la lógica de ranuras de Míticas
                 const history = mplus.weeklyHistory || {};
                 const runs: number[] = [];
                 Object.entries(history).forEach(([level, count]) => {
@@ -214,20 +213,38 @@ export const Dashboard: React.FC = () => {
                 });
                 const sortedRuns = runs.sort((a, b) => b - a);
 
-                // Slots en 1, 4, 8 runs
-                const valSlot1 = sortedRuns.length >= 1 ? sortedRuns[0] : 0;
-                const valSlot2 = sortedRuns.length >= 4 ? sortedRuns[3] : 0;
-                const valSlot3 = sortedRuns.length >= 8 ? sortedRuns[7] : 0;
+                // Tan: Añadimos las M0 al array de runs
+                const m0Count = mplus.mythic0Count || 0;
+                for (let i = 0; i < m0Count; i++) {
+                    sortedRuns.push(0);
+                }
 
-                const rules = metadata.mythicRules;
+                // Slots en 1, 4, 8 runs
+                const valSlot1 = sortedRuns.length >= 1 ? sortedRuns[0] : -1;
+                const valSlot2 = sortedRuns.length >= 4 ? sortedRuns[3] : -1;
+                const valSlot3 = sortedRuns.length >= 8 ? sortedRuns[7] : -1;
+
+                const rules = metadata.mythicRules as any;
                 let validSlots = 0;
-                if (valSlot1 >= rules.levelSlot1) validSlots++;
-                if (valSlot2 >= rules.levelSlot2) validSlots++;
-                if (valSlot3 >= rules.levelSlot3) validSlots++;
+                if (valSlot1 !== -1 && valSlot1 >= (rules.levelSlot1 || 2)) validSlots++;
+                if (valSlot2 !== -1 && valSlot2 >= (rules.levelSlot2 || 2)) validSlots++;
+                if (valSlot3 !== -1 && valSlot3 >= (rules.levelSlot3 || 2)) validSlots++;
 
                 const required = rules.requiredSlots || 1;
-                // Tan: Cálculo Proporcional (No binario)
-                mplusPct = Math.min((validSlots / required) * 100, 100);
+                const minItemLevel = rules.minItemLevel || 0;
+                const charIlvl = mplus.ilvl || 0;
+
+                const meetsIlvlRule = !minItemLevel || charIlvl >= minItemLevel;
+                const totalSlots = [valSlot1, valSlot2, valSlot3].filter(l => l !== -1).length;
+
+                // Tan: Cálculo Estricto alineado con Míticas+
+                if (validSlots >= required && meetsIlvlRule) {
+                    mplusPct = 100;
+                } else if (totalSlots >= required || validSlots > 0 || (validSlots >= required && !meetsIlvlRule)) {
+                    mplusPct = 50; // Parcial
+                } else {
+                    mplusPct = 0;
+                }
             }
 
             const currentGold = quota?.amount || 0;

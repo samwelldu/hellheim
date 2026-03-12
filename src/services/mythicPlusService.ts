@@ -537,16 +537,46 @@ export const mythicPlusService = {
                     // Tan: Cálculo Estricto de Rendimiento Tripartito
                     const attendPct = totalRaidsCount > 0 ? (currentAttendance / totalRaidsCount) * 100 : 0;
 
-                    // Cálculo Míticas (Lógica de Slots)
                     const history = char.pendingData.weeklyHistory || {};
                     const runs: number[] = [];
                     Object.entries(history).forEach(([level, count]) => {
                         for (let i = 0; i < (count as number); i++) runs.push(parseInt(level));
                     });
                     const sortedRuns = runs.sort((a, b) => b - a);
-                    // Reglas (Podemos hardcodear o fetch, fetch es mejor pero usaremos defaults sensatos para el historial)
-                    const valSlot1 = sortedRuns.length >= 1 ? sortedRuns[0] : 0;
-                    const mplusPct = valSlot1 >= 2 ? 100 : 0; // Simplificado para el snapshot histórico o basado en 1 slot
+
+                    const m0Count = char.pendingData.mythic0Count || 0;
+                    for (let i = 0; i < m0Count; i++) {
+                        sortedRuns.push(0);
+                    }
+
+                    // Slots at 1, 4, 8 runs
+                    const vaultSlots = [
+                        sortedRuns.length >= 1 ? sortedRuns[0] : -1,
+                        sortedRuns.length >= 4 ? sortedRuns[3] : -1,
+                        sortedRuns.length >= 8 ? sortedRuns[7] : -1
+                    ];
+
+                    const rulesDoc = await getDoc(doc(db, 'config', 'mythic_rules'));
+                    const rules = rulesDoc.exists() ? rulesDoc.data() as MythicRules : { requiredSlots: 1, levelSlot1: 2, levelSlot2: 2, levelSlot3: 2, minItemLevel: 0 };
+                    
+                    const charIlvl = char.pendingData.ilvl || 0;
+
+                    const required = rules.requiredSlots || 1;
+                    const totalSlots = vaultSlots.filter(l => l !== -1).length;
+
+                    let validSlots = 0;
+                    if (vaultSlots[0] !== -1 && vaultSlots[0] >= rules.levelSlot1) validSlots++;
+                    if (vaultSlots[1] !== -1 && vaultSlots[1] >= rules.levelSlot2) validSlots++;
+                    if (vaultSlots[2] !== -1 && vaultSlots[2] >= rules.levelSlot3) validSlots++;
+
+                    const meetsIlvlRule = !rules.minItemLevel || charIlvl >= rules.minItemLevel;
+
+                    let mplusPct = 0;
+                    if (validSlots >= required && meetsIlvlRule) {
+                        mplusPct = 100;
+                    } else if (totalSlots >= required || validSlots > 0 || (validSlots >= required && !meetsIlvlRule)) {
+                        mplusPct = 50; // Parcial
+                    }
 
                     const quotaPct = raidQuotaAmount > 0
                         ? (currentGold >= 0 ? 100 : Math.max(0, Math.round(100 + (currentGold / raidQuotaAmount * 100))))
