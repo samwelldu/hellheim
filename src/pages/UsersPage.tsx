@@ -52,7 +52,8 @@ export const UsersPage: React.FC = () => {
         try {
             const data = await userService.getAllUsers();
             // Tan: Filtramos usuarios huérfanos que solo tienen rol pero ni email ni id de blizzard
-            const saneData = data.filter(u => u.email || u.accountId || (u.alias && u.alias.trim() !== ''));
+            // Permitiendo los que tengan algun ID visible (id principal de firestore en su defecto)
+            const saneData = data.filter(u => u.email || u.accountId || (u.alias && u.alias.trim() !== '') || u.id);
 
             // Tan: Para usuarios sin fecha, usamos un fallback numérico bajo para ordenamiento seguro si fuera necesario
             const sanitizedUsers = saneData.map(u => ({
@@ -89,7 +90,8 @@ export const UsersPage: React.FC = () => {
                     }
                 } else {
                     // Mismo saneamiento por si la carga inicial viene del check
-                    const saneUsersList = usersList.filter(u => u.email || u.accountId || (u.alias && u.alias.trim() !== ''));
+                    // Permitiendo los que tengan algun ID visible (id principal de firestore en su defecto)
+                    const saneUsersList = usersList.filter(u => u.email || u.accountId || (u.alias && u.alias.trim() !== '') || u.id);
                     setUsers(saneUsersList);
                     setLoading(false);
                 }
@@ -224,7 +226,8 @@ export const UsersPage: React.FC = () => {
     const getDisplayName = (user: AppUser) => {
         if (user.accountId) return user.accountId; // BattleTag
         if (user.alias) return user.alias;
-        return user.email || 'Desconocido';
+        if (user.email) return user.email;
+        return user.id || 'Desconocido';
     };
 
     return (

@@ -2,10 +2,15 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Reglas abiertas: Necesario porque la app usa autenticación de Blizzard,
-    // por lo tanto, request.auth es null para Firebase.
-    match /{document=**} {
-      allow read, write: if true;
+    // Lectura general para el portal publico y dashboard
+    match /{TanDocumento=**} {
+      allow read: if true;
+    }
+
+    // El sistema guarda la sesión de Blizzard local, por lo que request.auth será null para varios
+    // usuarios administradores. Para que el APP ESTRICTAMENTE NO DEJE DE FUNCIONAR:
+    match /{TanColeccion}/{TanDocumentoId} {
+      allow write: if true;
     }
   }
 }
