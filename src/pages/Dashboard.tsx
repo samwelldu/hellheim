@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { Sword, TrendingUp, TrendingDown, Calendar, User, Zap, Loader2, ArrowUpRight, ArrowDownRight, Minus, Settings2, Save, Lock, Trash2 } from 'lucide-react';
+import { Sword, TrendingUp, TrendingDown, Calendar, User, Zap, Loader2, ArrowUpRight, ArrowDownRight, Minus, Settings2, Save, Lock, Trash2, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useCollection } from '../hooks/useCollection';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -357,6 +357,20 @@ export const Dashboard: React.FC = () => {
         }
     };
 
+    const handleMigrarHistorial = async () => {
+        if (!confirm('⚠️ Esto migrará los snapshots de SEM 1 al nuevo formato de ID. Es una operación única y segura. ¿Continuar?')) return;
+        setIsPublishing(true);
+        try {
+            const { migrados, omitidos } = await mythicPlusService.migrarFormatoHistorial();
+            showToast(`Migración completa: ${migrados} docs actualizados, ${omitidos} ya estaban en formato nuevo.`, 'success');
+        } catch (error) {
+            console.error('Error en migración:', error);
+            showToast('Error durante la migración del historial.', 'error');
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
     // Global Stats
     const stats = useMemo(() => {
         const total = playersPerformance.length;
@@ -616,6 +630,16 @@ export const Dashboard: React.FC = () => {
                                 >
                                     {isPublishing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                                     Reset Historial
+                                </button>
+                            )}
+                            {isAdmin && (
+                                <button
+                                    onClick={handleMigrarHistorial}
+                                    disabled={isPublishing}
+                                    className="ml-2 flex items-center gap-1.5 px-3 py-1 bg-orange-600/20 hover:bg-orange-600/40 text-orange-400 hover:text-orange-300 rounded-lg border border-orange-500/30 transition-all font-bold text-[10px] tracking-widest uppercase"
+                                >
+                                    {isPublishing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                                    Migrar SEM 1
                                 </button>
                             )}
                         </h3>

@@ -840,6 +840,54 @@ export const mythicPlusService = {
         return Array.from(dates).sort().reverse();
     },
 
+    // Tan: Migra los snapshots del formato viejo (id-periodId) al nuevo (id-wN-periodId)
+    // Útil cuando ya se publicó SEM 1 con el historyId viejo y no se puede republica
+    async migrarFormatoHistorial(): Promise<{ migrados: number; omitidos: number }> {
+        const snapshot = await getDocs(collection(db, HISTORY_COLLECTION));
+        let migrados = 0;
+        let omitidos = 0;
+
+        for (const docSnap of snapshot.docs) {
+            const docId = docSnap.id;
+            const data = docSnap.data();
+
+            // Tan: Detectamos el formato viejo: no contiene "-w" seguido de dígitos antes del periodId final
+            // Formato viejo:  nombre-reino-periodId   (ej: dorow-quelThalas-1053)
+            // Formato nuevo:  nombre-reino-wN-periodId (ej: dorow-quelThalas-w1-1053)
+            const esFormatoNuevo = /\-w\d+\-\d+$/.test(docId);
+            if (esFormatoNuevo) {
+                omitidos++;
+                continue;
+            }
+
+            // Tan: El periodId está al final del ID, separado por guion
+            const partes = docId.split('-');
+            const periodIdStr = partes[partes.length - 1];
+            const esNumero = /^\d+$/.test(periodIdStr);
+            if (!esNumero) {
+                omitidos++;
+                continue;
+            }
+
+            const weekNumGuardado = data.weekNum ?? 1;
+            const periodId = parseInt(periodIdStr, 10);
+            const idBase = partes.slice(0, -1).join('-');
+            const nuevoId = `${idBase}-w${weekNumGuardado}-${periodId}`;
+
+            // Crear el nuevo doc con todos los datos + weekNum garantizado
+            await setDoc(doc(db, HISTORY_COLLECTION, nuevoId), {
+                ...data,
+                weekNum: weekNumGuardado
+            });
+
+            // Borrar el viejo
+            await deleteDoc(doc(db, HISTORY_COLLECTION, docId));
+            migrados++;
+        }
+
+        return { migrados, omitidos };
+    },
+
     // Tan: Borrado total de la historia (Admin Only)
     async resetAllHistory(): Promise<number> {
         const snapshot = await getDocs(collection(db, HISTORY_COLLECTION));
