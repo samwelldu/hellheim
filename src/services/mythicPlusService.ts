@@ -112,6 +112,10 @@ export function getWeeklyRange(dateStr?: string, region: string = 'us'): { start
     start.setUTCDate(reference.getUTCDate() - ((day - resetDay + 7) % 7));
     start.setUTCHours(region === 'eu' ? 7 : usResetHour, 0, 0, 0);
 
+    if (reference.getTime() < start.getTime()) {
+        start.setUTCDate(start.getUTCDate() - 7);
+    }
+
     const end = new Date(start);
     end.setUTCDate(start.getUTCDate() + 7);
 
@@ -486,8 +490,31 @@ export const mythicPlusService = {
         // Tan: Dinamismo de temporada para Histórico
         const seasonDoc = await getDoc(doc(db, 'config', 'season'));
         let seasonActiveModules = { attendance: true, mythicPlus: true, quota: true };
+        let currentWeekNum = 1;
+
         if (seasonDoc.exists()) {
-            const sd = seasonDoc.data().modules;
+            const seasonData = seasonDoc.data();
+            
+            if (seasonData.startDate) {
+                const [year, month, day] = seasonData.startDate.split('-').map(Number);
+                const start = new Date(Date.UTC(year, month - 1, day));
+                
+                // Tan: Ajustar la hora de inicio a exactamente las 11 AM hora Chile
+                const utcStr = start.toLocaleString('en-US', { timeZone: 'UTC' });
+                const santiagoStr = start.toLocaleString('en-US', { timeZone: 'America/Santiago' });
+                const tzUtc = new Date(utcStr);
+                const tzSantiago = new Date(santiagoStr);
+                const offsetHours = Math.round((tzSantiago.getTime() - tzUtc.getTime()) / (1000 * 60 * 60));
+                
+                start.setUTCHours(11 - offsetHours, 0, 0, 0);
+
+                const diff = Date.now() - start.getTime();
+                if (diff >= 0) {
+                    currentWeekNum = Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1;
+                }
+            }
+
+            const sd = seasonData.modules;
             if (sd) {
                 seasonActiveModules.attendance = sd.attendance?.active ?? true;
                 seasonActiveModules.mythicPlus = sd.mythicPlus?.active ?? true;
@@ -610,12 +637,14 @@ export const mythicPlusService = {
                         globalPerf: globalPerf,
                         performanceColor: perfColor,
                         periodId: char.periodId || 0,
+                        weekNum: currentWeekNum, // <-- Guardar número de semana absoluto
                         snapshotAt: new Date()
                     }, { merge: true });
                 }
                 count++;
             }
         }
+
         return count;
     },
 
@@ -768,6 +797,29 @@ export const mythicPlusService = {
     },
 
     // Tan: Obtiene todas las fechas que tienen snapshots guardados
+    // Tan: Función directa para grabar el Snapshot visual del Dashboard
+    async publishDashboardSnapshot(
+        players: { id: string, name: string, globalPerf: number, performanceColor?: string }[],
+        weekNum: number,
+        currentPeriodId: number
+    ): Promise<number> {
+        let count = 0;
+        for (const player of players) {
+            const historyId = `${player.id}-${currentPeriodId}`;
+            await setDoc(doc(db, HISTORY_COLLECTION, historyId), {
+                id: player.id,
+                name: player.name,
+                globalPerf: player.globalPerf,
+                performanceColor: player.performanceColor || (player.globalPerf >= 80 ? 'green' : player.globalPerf >= 50 ? 'yellow' : 'red'),
+                periodId: currentPeriodId,
+                weekNum: weekNum,
+                snapshotAt: new Date()
+            }, { merge: true });
+            count++;
+        }
+        return count;
+    },
+
     async getHistoryDates(): Promise<string[]> {
         const snapshot = await getDocs(collection(db, HISTORY_COLLECTION));
         const dates = new Set<string>();
@@ -784,6 +836,17 @@ export const mythicPlusService = {
         });
 
         return Array.from(dates).sort().reverse();
+    },
+
+    // Tan: Borrado total de la historia (Admin Only)
+    async resetAllHistory(): Promise<number> {
+        const snapshot = await getDocs(collection(db, HISTORY_COLLECTION));
+        let count = 0;
+        for (const docSnap of snapshot.docs) {
+            await deleteDoc(doc(db, HISTORY_COLLECTION, docSnap.id));
+            count++;
+        }
+        return count;
     }
 };
 

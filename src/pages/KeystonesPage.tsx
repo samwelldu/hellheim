@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
-import { Shield, RefreshCw, X, Settings, RotateCw, FilterX, CheckCircle, Key, Package, Gavel } from 'lucide-react';
+import { Shield, RefreshCw, X, Settings, RotateCw, FilterX, Key, Package, Gavel } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { mythicPlusService, getWeeklyRange } from '../services/mythicPlusService';
 import type { CharacterProfile, MythicRules } from '../services/mythicPlusService';
@@ -21,9 +21,7 @@ export const KeystonesPage: React.FC = () => {
     const [editableRules, setEditableRules] = useState<MythicRules>({
         requiredSlots: 1, levelSlot1: 2, levelSlot2: 2, levelSlot3: 2
     });
-    const [hasPending, setHasPending] = useState(false);
     const [weeklyRange, setWeeklyRange] = useState<{ start: Date, end: Date } | null>(null);
-    const [isPublishing, setIsPublishing] = useState(false);
 
     // Tan: Estados para Sincronización Masiva Iterativa
     const [isSyncingAll, setIsSyncingAll] = useState(false);
@@ -54,15 +52,13 @@ export const KeystonesPage: React.FC = () => {
                 setCharacters(historyData);
                 setIsHistoricalView(true);
             } else {
-                const [chars, fetchedRules, pendingStatus] = await Promise.all([
+                const [chars, fetchedRules] = await Promise.all([
                     mythicPlusService.getAllCharacters(),
-                    mythicPlusService.getRules(),
-                    mythicPlusService.hasPendingChanges()
+                    mythicPlusService.getRules()
                 ]);
                 setCharacters(chars.sort((a, b) => (b.ilvl || 0) - (a.ilvl || 0)));
                 setRules(fetchedRules);
                 if (fetchedRules) setEditableRules(fetchedRules);
-                setHasPending(pendingStatus);
                 setIsHistoricalView(false);
 
                 // Tan: Calculamos el rango de la semana actual
@@ -188,21 +184,6 @@ export const KeystonesPage: React.FC = () => {
         }
     };
 
-    const handlePublish = async () => {
-        if (!confirm("¿Deseas publicar los resultados actuales? Se guardará un registro histórico y los datos serán oficiales.")) return;
-        setIsPublishing(true);
-        try {
-            const count = await mythicPlusService.publishResults();
-            showToast(`Se publicaron resultados de ${count} personajes.`, 'success');
-            await fetchData();
-        } catch (error) {
-            console.error("Error publishing:", error);
-            showToast("Error al publicar resultados.", 'error');
-        } finally {
-            setIsPublishing(false);
-        }
-    };
-
     const [searchTerm, setSearchTerm] = useState('');
 
     // Filter characters based on search
@@ -293,17 +274,6 @@ export const KeystonesPage: React.FC = () => {
                                     <RotateCw size={14} className={isSyncingAll ? "animate-spin z-10" : "z-10"} />
                                     {isSyncingAll && <span className="z-10 text-[10px] tabular-nums font-black">{syncProgress}%</span>}
                                 </button>
-
-                                {hasPending && (
-                                    <button
-                                        onClick={handlePublish}
-                                        disabled={isPublishing}
-                                        className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg border border-emerald-400 transition-all font-black shadow-lg text-xs animate-pulse-subtle"
-                                    >
-                                        {isPublishing ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle size={14} />}
-                                        {isPublishing ? 'Publicando...' : 'Publicar Resultados'}
-                                    </button>
-                                )}
                             </>
                         )}
                         {!isAdmin && mainCharacter && (

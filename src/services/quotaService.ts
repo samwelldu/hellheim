@@ -4,6 +4,7 @@ import type { QuotaRecord } from '../utils/luaParser';
 
 const UPLOADS_COLLECTION = 'quota_uploads';
 const QUOTES_COLLECTION = 'quote';
+const GOLD_REQUESTS_COLLECTION = 'gold_requests';
 
 export const quotaService = {
     /**
@@ -178,7 +179,8 @@ export const quotaService = {
             id: doc.id,
             name: doc.data().name as string,
             amount: doc.data().amount as number,
-            isPlayerToken: doc.data().isPlayerToken
+            isPlayerToken: doc.data().isPlayerToken,
+            statusNote: doc.data().statusNote || null
         }));
     },
 
@@ -336,5 +338,154 @@ export const quotaService = {
                 });
             }
         }
+    },
+
+    /**
+     * Tan: "Añadir Oro" - Añade oro directamente a un usuario.
+     */
+    async addGoldToPlayer(playerId: string, amountGold: number): Promise<void> {
+        const quoteRef = doc(db, QUOTES_COLLECTION, playerId);
+        await runTransaction(db, async (transaction) => {
+            const quoteSnap = await transaction.get(quoteRef);
+            const currentAmount = quoteSnap.exists() ? (quoteSnap.data().amount || 0) : 0;
+            const addedCopper = amountGold * 10000;
+            
+            if (quoteSnap.exists()) {
+                transaction.update(quoteRef, {
+                    amount: currentAmount + addedCopper,
+                    lastUpdated: new Date()
+                });
+            } else {
+                transaction.set(quoteRef, {
+                    name: playerId,
+                    amount: addedCopper,
+                    lastUpdated: new Date()
+                });
+            }
+        });
+    },
+
+    /**
+     * Tan: Crea una solicitud de depósito de oro.
+     */
+    async requestGoldDeposit(playerId: string, playerName: string, amountGold: number): Promise<void> {
+        const requestRef = doc(collection(db, GOLD_REQUESTS_COLLECTION));
+        await setDoc(requestRef, {
+            playerId,
+            playerName,
+            amount: amountGold * 10000,
+            status: 'pending',
+            createdAt: new Date()
+        });
+    },
+
+    /**
+     * Tan: Obtiene todas las solicitudes de oro pendientes.
+     */
+    async getPendingGoldRequests(): Promise<any[]> {
+        const q = query(
+            collection(db, GOLD_REQUESTS_COLLECTION),
+            where('status', '==', 'pending')
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    /**
+     * Tan: Obtiene las solicitudes de oro pendientes de un jugador específico.
+     */
+    async getPlayerPendingGoldRequests(playerId: string | null): Promise<any[]> {
+        if (!playerId) return [];
+        const q = query(
+            collection(db, GOLD_REQUESTS_COLLECTION),
+            where('playerId', '==', playerId),
+            where('status', '==', 'pending')
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    },
+
+    /**
+     * Tan: Aprueba una solicitud de depósito.
+     */
+    async approveGoldRequest(requestId: string): Promise<void> {
+        await runTransaction(db, async (transaction) => {
+            const requestRef = doc(db, GOLD_REQUESTS_COLLECTION, requestId);
+            const requestSnap = await transaction.get(requestRef);
+            
+            if (!requestSnap.exists() || requestSnap.data().status !== 'pending') {
+                throw new Error("Solicitud no válida.");
+            }
+
+            const data = requestSnap.data();
+            const quoteRef = doc(db, QUOTES_COLLECTION, data.playerId);
+            const quoteSnap = await transaction.get(quoteRef);
+
+            // 1. Marcar solicitud como aprobada
+            transaction.update(requestRef, { status: 'approved', approvedAt: new Date() });
+
+            // 2. Sumar oro y poner estado de notificación
+            const currentAmount = quoteSnap.exists() ? (quoteSnap.data().amount || 0) : 0;
+            transaction.set(quoteRef, {
+                amount: currentAmount + data.amount,
+                lastUpdated: new Date(),
+                statusNote: `accepted|${data.amount}`
+            }, { merge: true });
+        });
+    },
+
+    /**
+     * Tan: Rechaza una solicitud de depósito.
+     */
+    async rejectGoldRequest(requestId: string): Promise<void> {
+        await runTransaction(db, async (transaction) => {
+            const requestRef = doc(db, GOLD_REQUESTS_COLLECTION, requestId);
+            const requestSnap = await transaction.get(requestRef);
+
+            if (!requestSnap.exists() || requestSnap.data().status !== 'pending') {
+                throw new Error("Solicitud no válida.");
+            }
+
+            const data = requestSnap.data();
+            const quoteRef = doc(db, QUOTES_COLLECTION, data.playerId);
+
+            // 1. Marcar solicitud como rechazada
+            transaction.update(requestRef, { status: 'rejected', rejectedAt: new Date() });
+
+            // 2. Poner estado de notificación
+            transaction.set(quoteRef, {
+                statusNote: `rejected|${data.amount}`
+            }, { merge: true });
+        });
+    },
+
+    /**
+     * Tan: Limpia el mensaje de estado (Aceptado/Rechazado) para el jugador.
+     */
+    async dismissQuotaStatus(playerId: string): Promise<void> {
+        const quoteRef = doc(db, QUOTES_COLLECTION, playerId);
+        await updateDoc(quoteRef, {
+            statusNote: null
+        });
+    },
+
+    /**
+     * Tan: Obtiene el valor actual del festín desde la configuración.
+     */
+    async getFeastValue(): Promise<number> {
+        const configRef = doc(db, 'config', 'feast_value');
+        const snap = await getDoc(configRef);
+        return snap.exists() ? snap.data().amount : 0;
+    },
+
+    /**
+     * Tan: Actualiza el valor del festín en la configuración.
+     */
+    async setFeastValue(amount: number): Promise<void> {
+        const configRef = doc(db, 'config', 'feast_value');
+        await setDoc(configRef, {
+            amount: amount,
+            updatedAt: new Date()
+        });
     }
 };

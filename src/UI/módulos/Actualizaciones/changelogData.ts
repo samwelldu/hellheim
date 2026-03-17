@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        id: "v1.4.0",
+        version: "v1.4.0",
+        date: new Date().toLocaleDateString(),
+        title: "Actualización: Tesorería 2.0 y Dashboard Estratégico",
+        changes: [
+            "Tesoreria: Sistema de 'Depósito de Oro' interactivo para todos los miembros.",
+            "Tesoreria: Notificaciones detalladas de aprobación/rechazo con montos específicos.",
+            "Tesoreria: Contador de Oro Total de la Hermandad con semáforo de salud financiera.",
+            "Tesoreria: Gestión dinámica del 'Valor del Festín' para cálculo de solvencia.",
+            "Dashboard: Migración y simplificación de la lógica de publicación de resultados.",
+            "Dashboard: Función Snapshot para congelar estadísticas actuales en hitos semanales.",
+            "Dashboard: Botón 'Reset Historial' para limpieza administrativa de datos.",
+            "UI: Doble barra de desplazamiento y mejores contrastes de lectura en tablas densas."
+        ]
+    },
+    {
         id: "v1.3.0",
         version: "v1.3.0",
         date: new Date().toLocaleDateString(),

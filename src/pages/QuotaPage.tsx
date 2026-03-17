@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadCloud, FileText, CheckCircle, History, DollarSign, Crown, RotateCw, AlertCircle, Eye, Users } from 'lucide-react';
+import { UploadCloud, FileText, CheckCircle, History, DollarSign, Crown, RotateCw, AlertCircle, Eye, Users, Coins, XCircle, Info } from 'lucide-react';
 import { parseLuaTable, type QuotaRecord } from '../utils/luaParser';
 import { quotaService } from '../services/quotaService';
 import { attendanceService } from '../services/attendanceService';
@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
 export const QuotaPage: React.FC = () => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, playerToken, mainCharacter } = useAuth();
     const { showToast } = useToast();
     const [file, setFile] = useState<File | null>(null);
     const [parsedRecords, setParsedRecords] = useState<QuotaRecord[]>([]);
@@ -18,7 +18,7 @@ export const QuotaPage: React.FC = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadStats, setUploadStats] = useState<{ uploaded: number; duplicates: number } | null>(null);
 
-    const [ranking, setRanking] = useState<{ id: string; name: string; amount: number; className?: string; isPlayerToken?: boolean }[]>([]);
+    const [ranking, setRanking] = useState<{ id: string; name: string; amount: number; className?: string; isPlayerToken?: boolean; statusNote?: string | null }[]>([]);
     const [orphanRecords, setOrphanRecords] = useState<(QuotaRecord & { id: string })[]>([]);
     const [loadingRanking, setLoadingRanking] = useState(true);
     const [currentQuota, setCurrentQuota] = useState<number>(0);
@@ -30,6 +30,20 @@ export const QuotaPage: React.FC = () => {
     const [transferringRecord, setTransferringRecord] = useState<(QuotaRecord & { id: string }) | null>(null);
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
+    // Añadir oro State
+    const [addingTanGoldTo, setAddingTanGoldTo] = useState<string | null>(null);
+    const [addedTanGoldAmount, setAddedTanGoldAmount] = useState<number>(0);
+
+    // Gold Deposit Request State
+    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+    const [depositAmount, setDepositAmount] = useState<number>(0);
+    const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+    const [viewingRequest, setViewingRequest] = useState<any>(null);
+    const [totalGold, setTotalGold] = useState<number>(0);
+    const [feastValue, setFeastValue] = useState<number>(0);
+    const [isEditingFeast, setIsEditingFeast] = useState(false);
+    const [tempFeastValue, setTempFeastValue] = useState<number>(0);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -39,14 +53,21 @@ export const QuotaPage: React.FC = () => {
     const loadData = async () => {
         setLoadingRanking(true);
         try {
-            const [rankData, users, roster, q, orphans, pendingDiscount] = await Promise.all([
+            const [rankData, users, roster, q, orphans, pendingDiscount, pendingReqs, feastVal] = await Promise.all([
                 quotaService.getQuotaRanking(),
                 userService.getAllUsers(),
                 attendanceService.getCharacters(),
                 quotaService.getRaidQuota(),
                 isAdmin ? quotaService.getOrphanRecords() : Promise.resolve([]),
-                isAdmin ? quotaService.hasPendingRaidDiscount() : Promise.resolve(false)
+                isAdmin ? quotaService.hasPendingRaidDiscount() : Promise.resolve(false),
+                isAdmin ? quotaService.getPendingGoldRequests() : quotaService.getPlayerPendingGoldRequests(playerToken),
+                quotaService.getFeastValue()
             ]);
+
+            setFeastValue(feastVal);
+            setTempFeastValue(feastVal / 10000);
+            setTotalGold(rankData.reduce((acc, r) => acc + r.amount, 0));
+            setPendingRequests(pendingReqs);
 
             // Tan: Primero cargamos el mapa de alters y tokens para deducir dueños reales
             const mappings = await quotaService.getCharacterMappings();
@@ -147,7 +168,13 @@ export const QuotaPage: React.FC = () => {
             // Ordenar por nombre (Alfabético)
             unifiedRanking.sort((a, b) => a.name.localeCompare(b.name));
 
-            setRanking(unifiedRanking);
+            setRanking(unifiedRanking.map(r => {
+                const goldData = rankData.find(gr => gr.id === r.id);
+                return {
+                    ...r,
+                    statusNote: (goldData as any)?.statusNote || null
+                };
+            }));
             setOrphanRecords(orphans);
             setCurrentQuota(q);
             setHasPendingDiscount(pendingDiscount);
@@ -180,6 +207,22 @@ export const QuotaPage: React.FC = () => {
             loadData();
         } catch (e) {
             showToast("Error al traspasar oro.", "error");
+        }
+    };
+
+    const handleAddTanGold = async (playerId: string) => {
+        if (addedTanGoldAmount <= 0) {
+            showToast("Por favor, ingresa un monto válido de oro.", "error");
+            return;
+        }
+        try {
+            await quotaService.addGoldToPlayer(playerId, addedTanGoldAmount);
+            showToast("Oro añadido a la cuota con éxito.", "success");
+            setAddingTanGoldTo(null);
+            setAddedTanGoldAmount(0);
+            loadData();
+        } catch (e) {
+            showToast("Error al añadir el oro.", "error");
         }
     };
 
@@ -242,6 +285,82 @@ export const QuotaPage: React.FC = () => {
         return (amount / 10000).toLocaleString('es-CL', { maximumFractionDigits: 1 }) + "g";
     };
 
+    const handleRequestDeposit = async () => {
+        console.log("Tan Deposit Trace - Start", { playerToken, depositAmount });
+        let currentUser = ranking.find(r => r.id === playerToken);
+        
+        // Tan: Fallback si el usuario no tiene oro (no está en ranking) pero tiene identidad vinculada
+        if (!currentUser && playerToken && mainCharacter) {
+            currentUser = { id: playerToken, name: mainCharacter.name } as any;
+        }
+
+        if (!currentUser) {
+            console.error("Tan Deposit Trace - No currentUser found", { playerToken, mainCharacter, ranking });
+            showToast("No se encontró tu personaje principal vinculado. Vincúlalo en tu Perfil.", "error");
+            return;
+        }
+        if (depositAmount <= 0) {
+            showToast("Ingresa un monto válido.", "error");
+            return;
+        }
+        try {
+            setIsProcessing(true);
+            await quotaService.requestGoldDeposit(currentUser.id, currentUser.name, depositAmount);
+            showToast("Solicitud enviada. Pendiente de aprobación por un Admin.", "success");
+            setIsDepositModalOpen(false);
+            setDepositAmount(0);
+            loadData();
+        } catch (e) {
+            showToast("Error al enviar solicitud.", "error");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleApproveRequest = async (id: string) => {
+        try {
+            await quotaService.approveGoldRequest(id);
+            showToast("Depósito aprobado.", "success");
+            setViewingRequest(null);
+            loadData();
+        } catch (e) {
+            showToast("Error al aprobar.", "error");
+        }
+    };
+
+    const handleRejectRequest = async (id: string) => {
+        try {
+            await quotaService.rejectGoldRequest(id);
+            showToast("Depósito rechazado.", "success");
+            setViewingRequest(null);
+            loadData();
+        } catch (e) {
+            showToast("Error al rechazar.", "error");
+        }
+    };
+
+    const handleDismissStatus = async (playerId: string) => {
+        try {
+            await quotaService.dismissQuotaStatus(playerId);
+            showToast("Aviso cerrado.", "success");
+            loadData();
+        } catch (e) {
+            console.error("Tan Error Trace - Dismiss Status", e);
+            showToast("Error al cerrar el aviso. Revisa consola.", "error");
+        }
+    };
+
+    const handleSaveFeastValue = async () => {
+        try {
+            await quotaService.setFeastValue(tempFeastValue * 10000);
+            setFeastValue(tempFeastValue * 10000);
+            setIsEditingFeast(false);
+            showToast("Valor del festín actualizado.", "success");
+        } catch (e) {
+            showToast("Error al guardar valor del festín.", "error");
+        }
+    };
+
     return (
         <div className="space-y-8 animate-fade-in p-6">
             <header className="flex flex-col md:flex-row items-center justify-between gap-6 glass p-6 rounded-2xl relative z-50">
@@ -250,32 +369,104 @@ export const QuotaPage: React.FC = () => {
                         <DollarSign className="text-yellow-500" size={32} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black text-white tracking-tight">Gestión de Tesorería</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl font-black text-white tracking-tight">Gestión de Tesorería</h1>
+                            <div className="h-8 w-[2px] bg-white/10 mx-2 hidden md:block"></div>
+                            
+                            {/* Guild Total Gold Counter */}
+                            <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-xl border border-white/5 shadow-inner group">
+                                {(() => {
+                                    const ratio = feastValue > 0 ? totalGold / feastValue : 0;
+                                    const statusColor = ratio >= 3 ? 'bg-green-500' : ratio >= 1.5 ? 'bg-yellow-500' : 'bg-red-500';
+                                    const statusText = ratio >= 3 ? 'Saludable' : ratio >= 1.5 ? 'Regular' : 'Crítico';
+                                    const statusGlow = ratio >= 3 ? 'rgba(34,197,94,0.3)' : ratio >= 1.5 ? 'rgba(234,179,8,0.3)' : 'rgba(239,44,44,0.3)';
+                                    return (
+                                        <>
+                                            <div 
+                                                className={`w-2.5 h-2.5 rounded-full ${statusColor} animate-pulse`} 
+                                                style={{ boxShadow: `0 0 10px ${statusGlow}` }}
+                                                title={`Estado: ${statusText}`}
+                                            ></div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-midnight-500 font-black uppercase tracking-[0.2em] leading-none mb-1">Total Hermandad</span>
+                                                <span className="text-lg font-black text-yellow-500 italic tracking-tighter leading-none">
+                                                    {formatGold(totalGold)}
+                                                </span>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
+                            {/* Feast Value Display/Edit */}
+                            <div className="hidden lg:flex items-center gap-3 bg-midnight-900/40 px-4 py-2 rounded-xl border border-white/5 group">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-midnight-500 font-black uppercase tracking-[0.2em] leading-none mb-1 text-center">Valor Festín</span>
+                                    {isEditingFeast && isAdmin ? (
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="number" 
+                                                value={tempFeastValue || ''} 
+                                                onChange={(e) => setTempFeastValue(Number(e.target.value))}
+                                                className="w-20 bg-black/60 border border-yellow-500/30 rounded px-1 text-xs text-white font-black"
+                                                autoFocus
+                                            />
+                                            <button onClick={handleSaveFeastValue} className="text-green-500 hover:text-green-400">✓</button>
+                                            <button onClick={() => setIsEditingFeast(false)} className="text-red-500 hover:text-red-400">✕</button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-black text-white italic">
+                                                {formatGold(feastValue)}
+                                            </span>
+                                            {isAdmin && (
+                                                <button 
+                                                    onClick={() => setIsEditingFeast(true)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-midnight-400 hover:text-white underline uppercase"
+                                                >
+                                                    Editar
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                         <p className="text-midnight-400 text-sm font-medium uppercase tracking-widest">Aportes Semanales y Cuotas</p>
                     </div>
                 </div>
 
-                {isAdmin && (
-                    <button
-                        onClick={async () => {
-                            if (!confirm("⚠️ ATENCIÓN: Se eliminarán TODOS los registros de oro y auditorías de carga. Esta acción es irreversible. ¿Deseas continuar?")) return;
-                            try {
-                                setIsProcessing(true);
-                                await quotaService.purgeAllQuotaData();
-                                showToast("Tesorería reiniciada con éxito.", "success");
-                                loadData();
-                            } catch (e) {
-                                showToast("Error al purgar datos.", "error");
-                            } finally {
-                                setIsProcessing(false);
-                            }
-                        }}
-                        className="px-6 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-red-500/5 group"
-                    >
-                        <RotateCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                        Reiniciar Tesorería
-                    </button>
-                )}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsDepositModalOpen(true)}
+                            className="px-6 py-3 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-yellow-500/5"
+                        >
+                            <Coins size={14} />
+                            Depositar Oro
+                        </button>
+
+                        {isAdmin && (
+                            <button
+                                onClick={async () => {
+                                    if (!confirm("⚠️ ATENCIÓN: Se eliminarán TODOS los registros de oro y auditorías de carga. Esta acción es irreversible. ¿Deseas continuar?")) return;
+                                    try {
+                                        setIsProcessing(true);
+                                        await quotaService.purgeAllQuotaData();
+                                        showToast("Tesorería reiniciada con éxito.", "success");
+                                        loadData();
+                                    } catch (e) {
+                                        showToast("Error al purgar datos.", "error");
+                                    } finally {
+                                        setIsProcessing(false);
+                                    }
+                                }}
+                                className="px-6 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-red-500/5 group"
+                            >
+                                <RotateCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                                Reiniciar Tesorería
+                            </button>
+                        )}
+                    </div>
             </header>
 
             <div className="bg-black/40 p-1 rounded-3xl border border-white/5 shadow-2xl">
@@ -475,13 +666,97 @@ export const QuotaPage: React.FC = () => {
                                                                             </span>
                                                                         )}
                                                                     </div>
+                                                                    {row.statusNote && (
+                                                                        <div className="flex items-center gap-2 mt-2 animate-bounce-subtle">
+                                                                            {(() => {
+                                                                                const [type, copper] = (row.statusNote || '').split('|');
+                                                                                const isAccepted = type === 'accepted';
+                                                                                const displayAmount = copper ? formatGold(Number(copper)) : '';
+                                                                                
+                                                                                return (
+                                                                                    <div 
+                                                                                        onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleDismissStatus(row.id); }}
+                                                                                        className={clsx(
+                                                                                        "flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter border shadow-lg cursor-pointer transition-all hover:scale-105 active:scale-95 group/pill",
+                                                                                        isAccepted 
+                                                                                            ? "bg-green-500/10 text-green-400 border-green-500/30 shadow-green-500/5 hover:bg-green-500/20" 
+                                                                                            : "bg-red-500/10 text-red-400 border-red-500/30 shadow-red-500/5 hover:bg-red-500/20"
+                                                                                    )}>
+                                                                                        {isAccepted ? <CheckCircle size={10} className="text-green-500" /> : <XCircle size={10} className="text-red-500" />}
+                                                                                        <span>
+                                                                                            {isAccepted ? 'Depósito Aceptado' : 'Depósito Rechazado'}
+                                                                                            {displayAmount && <span className="ml-1 opacity-70">({displayAmount})</span>}
+                                                                                        </span>
+                                                                                        <div className="ml-1 p-0.5 bg-white/5 group-hover/pill:bg-white/20 rounded-full transition-colors">
+                                                                                            <span className="text-[8px] leading-none opacity-60 group-hover/pill:opacity-100">✕</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div >
                                                         </td >
                                                         <td className="py-2 px-3 text-right">
-                                                            <span className={clsx("font-black text-base tracking-tighter", row.amount < 0 ? "text-red-500" : "text-yellow-500")}>
-                                                                {formatGold(row.amount)}
-                                                            </span>
+                                                            <div className="flex items-center justify-end gap-3">
+                                                                <div className="flex flex-col items-end">
+                                                                    <span className={clsx("font-black text-base tracking-tighter", row.amount < 0 ? "text-red-500" : "text-yellow-500")}>
+                                                                        {formatGold(row.amount)}
+                                                                    </span>
+                                                                    {pendingRequests.some(pr => pr.playerId === row.id) && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                if (isAdmin) {
+                                                                                    setViewingRequest(pendingRequests.find(pr => pr.playerId === row.id));
+                                                                                }
+                                                                            }}
+                                                                            className={clsx(
+                                                                                "text-[10px] font-black underline underline-offset-2",
+                                                                                isAdmin ? "text-blue-400 hover:text-blue-300 decoration-blue-500/30" : "text-midnight-500 decoration-midnight-700 cursor-default"
+                                                                            )}
+                                                                        >
+                                                                            +{formatGold(pendingRequests.find(pr => pr.playerId === row.id).amount)} PENDIENTE
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                                {isAdmin && (
+                                                                    <div className="flex items-center gap-2">
+                                                                        {addingTanGoldTo === row.id ? (
+                                                                            <>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    value={addedTanGoldAmount || ''}
+                                                                                    onChange={(e) => setAddedTanGoldAmount(Number(e.target.value))}
+                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                    className="w-24 bg-midnight-950 text-white font-black px-2 py-1.5 rounded-lg border border-midnight-800 focus:border-yellow-500 outline-none text-right text-xs"
+                                                                                    placeholder="Oro"
+                                                                                />
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); handleAddTanGold(row.id); }}
+                                                                                    className="px-2 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-500 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border border-green-500/30"
+                                                                                >
+                                                                                    Aceptar oro
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => { e.stopPropagation(); setAddingTanGoldTo(null); setAddedTanGoldAmount(0); }}
+                                                                                    className="px-2 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-500 rounded-lg text-[10px] font-black transition-all border border-red-500/30"
+                                                                                >
+                                                                                    ✕
+                                                                                </button>
+                                                                            </>
+                                                                        ) : (
+                                                                            <button
+                                                                                onClick={(e) => { e.stopPropagation(); setAddingTanGoldTo(row.id); setAddedTanGoldAmount(0); }}
+                                                                                className="px-3 py-1.5 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border border-yellow-500/20"
+                                                                            >
+                                                                                Añadir oro
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr >
                                                 );
@@ -639,6 +914,109 @@ export const QuotaPage: React.FC = () => {
                                 Entendido
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Depositar Oro */}
+            {isDepositModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-md bg-midnight-900 border border-midnight-700 p-8 rounded-[40px] shadow-2xl space-y-8 relative overflow-hidden">
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-500/10 blur-[50px] rounded-full"></div>
+                        
+                        <div className="space-y-2">
+                            <h3 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3 italic">
+                                <Coins className="text-yellow-500" size={28} /> Depositar Oro
+                            </h3>
+                            <p className="text-xs text-midnight-400 font-medium">
+                                El monto será enviado para revisión. Los administradores deben confirmar la recepción antes de sumarse a tu balance.
+                            </p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-yellow-500 font-black text-xl italic">G</span>
+                                <input
+                                    type="number"
+                                    value={depositAmount || ''}
+                                    onChange={(e) => setDepositAmount(Number(e.target.value))}
+                                    className="w-full bg-midnight-950 text-white font-black pl-12 pr-6 py-5 rounded-2xl border border-midnight-800 focus:border-yellow-500 outline-none text-2xl transition-all shadow-inner"
+                                    placeholder="0"
+                                />
+                            </div>
+
+                            <button
+                                onClick={handleRequestDeposit}
+                                disabled={isProcessing}
+                                className="w-full py-5 bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-black font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-yellow-500/20 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+                            >
+                                {isProcessing ? <RotateCw className="animate-spin" size={20} /> : <CheckCircle size={20} />}
+                                Solicitar Depósito
+                            </button>
+
+                            <button
+                                onClick={() => { setIsDepositModalOpen(false); setDepositAmount(0); }}
+                                className="w-full py-3 text-midnight-500 font-black uppercase text-[10px] tracking-widest hover:text-white transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Detalle de Solicitud (Admin) */}
+            {viewingRequest && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-md bg-[#0c0514] border border-white/10 p-10 rounded-[48px] shadow-3xl space-y-8 relative overflow-hidden">
+                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full"></div>
+
+                        <div className="space-y-2 relative z-10 text-center">
+                            <div className="w-16 h-16 bg-blue-500/10 rounded-3xl border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                                <Info className="text-blue-400" size={32} />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">Revisar Solicitud</h3>
+                            <p className="text-xs text-midnight-400 font-medium">Solicitud de depósito ingresada por el jugador.</p>
+                        </div>
+
+                        <div className="bg-black/40 rounded-3xl p-6 border border-white/5 space-y-4 relative z-10">
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-midnight-500 border-b border-white/5 pb-3">
+                                <span>Personaje</span>
+                                <span className="text-white">{viewingRequest.playerName}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-midnight-500 border-b border-white/5 pb-3">
+                                <span>Fecha</span>
+                                <span className="text-white">{viewingRequest.createdAt?.toDate ? viewingRequest.createdAt.toDate().toLocaleDateString('es-CL') : 'Hoy'}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-midnight-500">Monto Solicitado</span>
+                                <span className="text-3xl font-black text-blue-400 italic tracking-tighter">
+                                    {formatGold(viewingRequest.amount)}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 relative z-10">
+                            <button
+                                onClick={() => handleApproveRequest(viewingRequest.id)}
+                                className="py-5 bg-green-500 hover:bg-green-400 text-black font-black uppercase tracking-widest rounded-3xl transition-all shadow-xl shadow-green-500/20 hover:scale-105"
+                            >
+                                Aceptar
+                            </button>
+                            <button
+                                onClick={() => handleRejectRequest(viewingRequest.id)}
+                                className="py-5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 font-black uppercase tracking-widest rounded-3xl transition-all hover:scale-105"
+                            >
+                                Rechazar
+                            </button>
+                        </div>
+
+                        <button
+                            onClick={() => setViewingRequest(null)}
+                            className="w-full text-center text-midnight-500 font-black uppercase text-[10px] tracking-widest hover:text-white transition-colors relative z-10"
+                        >
+                            Cerrar detalle
+                        </button>
                     </div>
                 </div>
             )}
