@@ -660,8 +660,8 @@ export const Dashboard: React.FC = () => {
                             {playersPerformance.map((player) => {
                                 const classColor = getClassColor(player.class);
 
-                                // Tan: Buscamos el historial para este personaje
-                                const charHistory = mythicHistory.filter(h => h.id.startsWith(player.name.toLowerCase()));
+                                // Tan: Buscamos el historial para este personaje usando su ID robusto (no el nombre)
+                                const charHistory = mythicHistory.filter(h => h.id.startsWith(player.id + '-'));
 
                                 return (
                                     <tr key={player.name} className="hover:bg-white/5 transition-all duration-300 group">
