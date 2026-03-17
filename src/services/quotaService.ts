@@ -285,26 +285,29 @@ export const quotaService = {
 
         for (const chunk of chunks) {
             await runTransaction(db, async (transaction) => {
-                for (const tokenId of chunk) {
-                    const userRef = doc(db, QUOTES_COLLECTION, tokenId);
-                    const userSnap = await transaction.get(userRef);
+                // Tan: Fase 1 - Solo lecturas. Firestore exige que todas lleguen antes de escribir.
+                const refs = chunk.map(tokenId => doc(db, QUOTES_COLLECTION, tokenId));
+                const snaps = await Promise.all(refs.map(ref => transaction.get(ref)));
+
+                // Tan: Fase 2 - Solo escrituras, ya con los datos leídos en memoria.
+                snaps.forEach((userSnap, index) => {
+                    const userRef = refs[index];
+                    const tokenId = chunk[index];
 
                     if (userSnap.exists()) {
                         const currentAmount = userSnap.data().amount || 0;
-                        const newAmount = currentAmount - quotaAmount;
                         transaction.update(userRef, {
-                            amount: newAmount,
+                            amount: currentAmount - quotaAmount,
                             lastUpdated: new Date()
                         });
                     } else {
-                        // Si el usuario no existe en la tesorería, le creamos la deuda inicial en negativo
                         transaction.set(userRef, {
                             name: tokenId,
                             amount: -quotaAmount,
                             lastUpdated: new Date()
                         });
                     }
-                }
+                });
             });
             processed += chunk.length;
         }
