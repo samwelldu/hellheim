@@ -713,10 +713,9 @@ export const Dashboard: React.FC = () => {
                                             const weekNum = i + 1;
                                             const isFuture = weekNum > currentWeekRel;
 
-                                            // Buscar el registro histórico congelado
+                                            // Buscar el registro histórico congelado solo por weekNum explícito
                                             const historyEntry = charHistory.find(h => 
-                                                (h.weekNum && h.weekNum === weekNum) || 
-                                                (!h.weekNum && weekNum === 1)
+                                                h.weekNum === weekNum
                                             );
 
                                             let color = 'bg-midnight-800/10';

@@ -805,7 +805,9 @@ export const mythicPlusService = {
     ): Promise<number> {
         let count = 0;
         for (const player of players) {
-            const historyId = `${player.id}-${currentPeriodId}`;
+            // Tan: Clave única por semana interna para que SEM 1 y SEM 2 nunca se pisen,
+            // incluso si Blizzard repite el periodId entre resets de temporada
+            const historyId = `${player.id}-w${weekNum}-${currentPeriodId}`;
             await setDoc(doc(db, HISTORY_COLLECTION, historyId), {
                 id: player.id,
                 name: player.name,
