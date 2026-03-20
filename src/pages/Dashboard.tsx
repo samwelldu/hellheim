@@ -19,6 +19,7 @@ interface AttendanceProfile {
 
 interface HistoryRecord {
     id: string;
+    name?: string;
     periodId: number;
     performanceColor: 'green' | 'yellow' | 'red';
     weeklyHistory: Record<string, number>;
@@ -282,6 +283,27 @@ export const Dashboard: React.FC = () => {
 
         return players.sort((a, b) => b.globalPerf - a.globalPerf);
     }, [attendanceData, mythicData, quotaData, metadata, season, currentWeekRel]);
+
+    // Tan: Mapa de historial indexado exactamente por ID/Nombre + semana para lookup O(1)
+    // Esto reemplaza el filter+startsWith que era impreciso y podía matchear docs incorrectos
+    const historyMap = useMemo(() => {
+        const mapa = new Map<string, HistoryRecord>();
+        mythicHistory.forEach(h => {
+            const sem = h.weekNum;
+            if (!sem) return;
+            // Tan: Guardamos por ID de personaje (campo guardado en el doc de Firestore)
+            if (h.id) {
+                const claveId = `${h.id.toLowerCase()}:${sem}`;
+                if (!mapa.has(claveId)) mapa.set(claveId, h);
+            }
+            // Tan: Guardamos también por nombre como fallback por si el ID difiere
+            if (h.name) {
+                const claveNombre = `nombre:${h.name.toLowerCase()}:${sem}`;
+                if (!mapa.has(claveNombre)) mapa.set(claveNombre, h);
+            }
+        });
+        return mapa;
+    }, [mythicHistory]);
 
     // Tan: Sincronización de scroll (Ubicado aquí para tener acceso a playersPerformance)
     useEffect(() => {
@@ -684,11 +706,6 @@ export const Dashboard: React.FC = () => {
                             {playersPerformance.map((player) => {
                                 const classColor = getClassColor(player.class);
 
-                                // Tan: Buscamos el historial para este personaje (Hardened: ID + Name check lowercase)
-                                const charHistory = mythicHistory.filter(h => 
-                                    h.id.toLowerCase().startsWith(player.id.toLowerCase()) || 
-                                    h.id.toLowerCase().startsWith(player.name.toLowerCase())
-                                );
 
                                 return (
                                     <tr key={player.name} className="hover:bg-white/5 transition-all duration-300 group">
@@ -737,10 +754,10 @@ export const Dashboard: React.FC = () => {
                                             const weekNum = i + 1;
                                             const isFuture = weekNum > currentWeekRel;
 
-                                            // Buscar el registro histórico congelado solo por weekNum explícito
-                                            const historyEntry = charHistory.find(h => 
-                                                h.weekNum === weekNum
-                                            );
+                                            // Tan: Lookup exacto en el mapa precalculado — O(1), sin startsWith, sin falsos positivos
+                                            const historyEntry =
+                                                historyMap.get(`${player.id.toLowerCase()}:${weekNum}`) ||
+                                                historyMap.get(`nombre:${player.name.toLowerCase()}:${weekNum}`);
 
                                             let color = 'bg-midnight-800/10';
                                             let tooltip = `Semana ${weekNum}`;

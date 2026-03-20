@@ -118,12 +118,11 @@ export const AttendancePage: React.FC = () => {
                 throw new Error(errorMsg);
             }
 
-            // 3. Match with Manual Roster (Strict: Name + Realm)
-            // Create a Set of "name-realm" for O(1) lookup.
-            const wclKeys = new Set(wclParticipants.map(p => {
-                const name = (p.name || '').toLowerCase();
-                const realm = (p.realm || '').toLowerCase().replace(/\s+/g, '-').replace(/'/g, '');
-                return `${name}-${realm}`;
+            // 3. Match with Manual Roster (Strict: Name + Realm, Fallback: Name only if WCL realm is missing)
+            // Create a list of WCL participants to iterate
+            const wclList = wclParticipants.map(p => ({
+                name: (p.name || '').toLowerCase(),
+                realm: (p.realm || '').toLowerCase().replace(/\\s+/g, '-').replace(/'/g, '')
             }));
 
             let matchedIds: string[] = [];
@@ -131,10 +130,18 @@ export const AttendancePage: React.FC = () => {
 
             roster.forEach(member => {
                 const memberName = member.name.toLowerCase();
-                const memberRealm = member.realm.toLowerCase();
-                const key = `${memberName}-${memberRealm}`;
+                const memberRealm = member.realm.toLowerCase().replace(/\\s+/g, '-').replace(/'/g, '');
+                
+                // Buscar si existe en la lista de WCL
+                const matchPos = wclList.findIndex(wclP => {
+                    if (wclP.realm) {
+                        return wclP.name === memberName && wclP.realm === memberRealm;
+                    }
+                    // Si WCL no especifica reino, matchea por nombre
+                    return wclP.name === memberName;
+                });
 
-                if (wclKeys.has(key)) {
+                if (matchPos !== -1) {
                     matchedIds.push(member.id);
                     matchedNames.push(`${member.name} (${member.realm})`);
                 }
