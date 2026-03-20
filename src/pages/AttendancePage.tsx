@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, ExternalLink, Shield, Search, Trash2, RefreshCw, MinusCircle } from 'lucide-react';
+import { Users, ExternalLink, Shield, Search, Trash2, RefreshCw, MinusCircle, PlusCircle } from 'lucide-react';
 import { getClassColor } from '../utils/wowClasses';
 
 import { useToast } from '../context/ToastContext';
@@ -406,6 +406,17 @@ export const AttendancePage: React.FC = () => {
                                             {
                                                 isAdmin && (
                                                     <td className="py-2 px-3 text-center flex items-center justify-center gap-1">
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                await attendanceService.addAttendance(member.id);
+                                                                fetchData();
+                                                            }}
+                                                            className="p-1.5 text-midnight-600 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
+                                                            title="Sumar 1 asistencia"
+                                                        >
+                                                            <PlusCircle size={14} />
+                                                        </button>
                                                         <button
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();

@@ -217,6 +217,24 @@ export const attendanceService = {
     },
 
     /**
+     * Tan: Suma 1 asistencia a un personaje manualmente (Corrector de QA)
+     */
+    async addAttendance(id: string): Promise<void> {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            const snap = await getDoc(docRef);
+            if (!snap.exists()) return;
+            const data = snap.data() as AttendanceProfile;
+            const currentCount = data.attendedRaids || 0;
+            // Sumamos 1
+            await setDoc(docRef, { attendedRaids: currentCount + 1 }, { merge: true });
+        } catch (error) {
+            console.error("Error adding attendance:", error);
+            throw error;
+        }
+    },
+
+    /**
      * RESET EVERYTHING: Deletes all characters and resets counter.
      */
     async resetDatabase(): Promise<void> {
