@@ -319,6 +319,14 @@ export const quotaService = {
     },
 
     /**
+     * Tan: Elimina la lista de espera de cobro de Raid sin descontar oro.
+     */
+    async clearPendingRaidDiscount(): Promise<void> {
+        const pendingDiscountRef = doc(db, 'config', 'pending_raid_discount');
+        await deleteDoc(pendingDiscountRef);
+    },
+
+    /**
      * Tan: Purga Total de Tesorería.
      * Elimina TODOS los registros de balances ('quote') y auditorías ('quota_uploads').
      * Solo debe ser invocado por administradores.

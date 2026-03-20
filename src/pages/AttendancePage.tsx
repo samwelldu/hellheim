@@ -410,7 +410,7 @@ export const AttendancePage: React.FC = () => {
                                                             onClick={async (e) => {
                                                                 e.stopPropagation();
                                                                 await attendanceService.addAttendance(member.id);
-                                                                fetchData();
+                                                                setRoster(prev => prev.map(m => m.id === member.id ? { ...m, attendedRaids: (m.attendedRaids || 0) + 1 } : m));
                                                             }}
                                                             className="p-1.5 text-midnight-600 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
                                                             title="Sumar 1 asistencia"
@@ -422,7 +422,7 @@ export const AttendancePage: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 if (member.attendedRaids > 0) {
                                                                     await attendanceService.subtractAttendance(member.id);
-                                                                    fetchData();
+                                                                    setRoster(prev => prev.map(m => m.id === member.id ? { ...m, attendedRaids: Math.max(0, (m.attendedRaids || 0) - 1) } : m));
                                                                 }
                                                             }}
                                                             className="p-1.5 text-midnight-600 hover:text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-all"

@@ -554,6 +554,27 @@ export const QuotaPage: React.FC = () => {
                                 >
                                     <History size={24} />
                                 </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!hasPendingDiscount) return;
+                                        if (!confirm("¿Estás seguro de descartar la lista de descuentos pendientes sin aplicar ningún cobro? (La asistencia del roster se mantendrá)")) return;
+                                        try {
+                                            await quotaService.clearPendingRaidDiscount();
+                                            showToast("Lista de cobros descartada.", 'success');
+                                            loadData();
+                                        } catch (e: any) {
+                                            showToast(e.message || "Error al descartar la lista.", "error");
+                                        }
+                                    }}
+                                    disabled={!hasPendingDiscount}
+                                    className={`p-4 rounded-2xl transition-all ${hasPendingDiscount
+                                        ? "bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20 hover:scale-110"
+                                        : "bg-midnight-800/50 text-midnight-600 border border-midnight-700/50 cursor-not-allowed"
+                                        }`}
+                                    title={hasPendingDiscount ? "Descartar cobros de esta raid" : "No hay descuentos pendientes"}
+                                >
+                                    <XCircle size={24} />
+                                </button>
                             </div>
                         )}
                     </div>
