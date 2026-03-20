@@ -17,6 +17,29 @@ interface LootItem {
     uploadedAt: Timestamp;
 }
 
+const normalizeLootItem = (rawItem: any) => {
+    const keys = Object.keys(rawItem);
+
+    const findValue = (possibleKeys: string[]) => {
+        const foundKey = keys.find(k =>
+            possibleKeys.map(pk => pk.toLowerCase())
+                .includes(k.toLowerCase().trim())
+        );
+        return foundKey ? rawItem[foundKey] : '';
+    };
+
+    const itemId = findValue(['itemId', 'item_id', 'itemid']);
+    const itemName = findValue(['item', 'itemName', 'loot', 'object', 'objeto', 'articulo', 'item_name']);
+
+    return {
+        name: findValue(['name', 'player', 'playerName', 'character', 'char', 'jugador', 'nombre', 'user']),
+        item: itemName,
+        itemId: itemId,
+        response: findValue(['response', 'reason', 'vote', 'how', 'respuesta', 'motivo', 'ganado']),
+        date: findValue(['date', 'dateTime', 'time', 'timestamp', 'day', 'fecha', 'hora']),
+    };
+};
+
 export const Loot: React.FC = () => {
     // Tan organiza los datos y el estado para que todo fluya con elegancia
     const [TanLootOriginal, setTanLootOriginal] = useState<LootItem[]>([]);
@@ -139,29 +162,6 @@ export const Loot: React.FC = () => {
         } finally {
             setIsUploading(false);
         }
-    };
-
-    const normalizeLootItem = (rawItem: any) => {
-        const keys = Object.keys(rawItem);
-
-        const findValue = (possibleKeys: string[]) => {
-            const foundKey = keys.find(k =>
-                possibleKeys.map(pk => pk.toLowerCase())
-                    .includes(k.toLowerCase().trim())
-            );
-            return foundKey ? rawItem[foundKey] : '';
-        };
-
-        const itemId = findValue(['itemId', 'item_id', 'itemid']);
-        const itemName = findValue(['item', 'itemName', 'loot', 'object', 'objeto', 'articulo', 'item_name']);
-
-        return {
-            name: findValue(['name', 'player', 'playerName', 'character', 'char', 'jugador', 'nombre', 'user']),
-            item: itemName,
-            itemId: itemId,
-            response: findValue(['response', 'reason', 'vote', 'how', 'respuesta', 'motivo', 'ganado']),
-            date: findValue(['date', 'dateTime', 'time', 'timestamp', 'day', 'fecha', 'hora']),
-        };
     };
 
     const getResponseStyle = (response: string) => {
