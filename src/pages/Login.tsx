@@ -119,6 +119,18 @@ export const Login: React.FC = () => {
                                         </svg>
                                         Acceso Jugadores
                                     </button>
+                                    
+                                    <div className="text-center pt-2">
+                                        <a 
+                                            href="https://battle.net/login/logout" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-[9px] text-midnight-500 hover:text-white transition-colors uppercase tracking-widest underline underline-offset-4"
+                                            title="Usa esta opción si quieres entrar con una cuenta de Battle.net distinta a la que usaste la última vez"
+                                        >
+                                            ¿Cambiar de cuenta Blizzard?
+                                        </a>
+                                    </div>
                                 </div>
 
                                 <div className="pt-8 border-t border-white/5 space-y-4">
