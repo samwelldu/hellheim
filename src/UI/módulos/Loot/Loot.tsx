@@ -21,6 +21,8 @@ export const Loot: React.FC = () => {
     // Tan organiza los datos y el estado para que todo fluya con elegancia
     const [TanLootOriginal, setTanLootOriginal] = useState<LootItem[]>([]);
     const [TanFechaFiltro, setTanFechaFiltro] = useState<string>(''); // Formato YYYY-MM-DD
+    const [TanMotivoFiltro, setTanMotivoFiltro] = useState<string>('');
+
     const [isUploading, setIsUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const { isAdmin } = useAuth();
@@ -65,15 +67,38 @@ export const Loot: React.FC = () => {
         return [cleanDate];
     };
 
-    // Tan filtra los registros para que solo veas lo que realmente importa (como la raid de ayer)
-    const TanLootFiltrado = useMemo(() => {
-        if (!TanFechaFiltro) return TanLootOriginal;
-
-        return TanLootOriginal.filter(item => {
-            const fechasPosibles = TanNormalizarFecha(item.date);
-            return fechasPosibles.includes(TanFechaFiltro);
+    // Tan extrae todos los motivos únicos disponibles dinámicamente
+    const TanMotivosUnicos = useMemo(() => {
+        const motivos = new Set<string>();
+        TanLootOriginal.forEach(raw => {
+            const display = normalizeLootItem(raw);
+            if (display.response) {
+                motivos.add(display.response);
+            }
         });
-    }, [TanLootOriginal, TanFechaFiltro]);
+        return Array.from(motivos).sort();
+    }, [TanLootOriginal]);
+
+    // Tan filtra los registros para que solo veas lo que realmente importa
+    const TanLootFiltrado = useMemo(() => {
+        let filtrado = TanLootOriginal;
+
+        if (TanFechaFiltro) {
+            filtrado = filtrado.filter(item => {
+                const fechasPosibles = TanNormalizarFecha(item.date);
+                return fechasPosibles.includes(TanFechaFiltro);
+            });
+        }
+
+        if (TanMotivoFiltro) {
+            filtrado = filtrado.filter(item => {
+                const display = normalizeLootItem(item);
+                return display.response === TanMotivoFiltro;
+            });
+        }
+
+        return filtrado;
+    }, [TanLootOriginal, TanFechaFiltro, TanMotivoFiltro]);
 
     // Tan detecta en qué días hubo acción para que el calendario brille
     const TanDiasConActividad = useMemo(() => {
@@ -283,19 +308,34 @@ export const Loot: React.FC = () => {
                         </p>
                     </div>
 
-                    {/* El Calendario Dinámico de Tan - Robusto y Visual */}
+                    {/* Filtros Dinámicos de Tan */}
                     <div className="flex items-center gap-3">
+                        {TanMotivosUnicos.length > 0 && (
+                            <select
+                                value={TanMotivoFiltro}
+                                onChange={(e) => setTanMotivoFiltro(e.target.value)}
+                                className="bg-void/10 border border-void/20 text-void-light text-xs font-black uppercase tracking-widest rounded-2xl px-4 py-3 outline-none hover:bg-void/20 hover:border-void/30 transition-all cursor-pointer text-center appearance-none"
+                                style={{ textAlignLast: 'center' }}
+                            >
+                                <option value="" className="bg-midnight-900 text-midnight-300">TODOS LOS MOTIVOS</option>
+                                {TanMotivosUnicos.map(motivo => (
+                                    <option key={motivo} value={motivo} className="bg-midnight-900 text-white">
+                                        {motivo}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                         <TanCalendario
                             TanFechaSeleccionada={TanFechaFiltro}
                             TanAlCambiarFecha={setTanFechaFiltro}
                             TanDiasConLoot={TanDiasConActividad}
                         />
 
-                        {TanFechaFiltro && (
+                        {(TanFechaFiltro || TanMotivoFiltro) && (
                             <button
-                                onClick={() => setTanFechaFiltro('')}
+                                onClick={() => { setTanFechaFiltro(''); setTanMotivoFiltro(''); }}
                                 className="p-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 hover:bg-red-500/20 transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/5 group"
-                                title="Limpiar Filtro"
+                                title="Limpiar Filtros"
                             >
                                 <FilterX size={16} className="group-hover:scale-110 transition-transform" /> Borrar
                             </button>
