@@ -808,17 +808,7 @@ export const mythicPlusService = {
             const historyId = `${player.id}-w${weekNum}-${currentPeriodId}`;
             const docRef = doc(db, HISTORY_COLLECTION, historyId);
             
-            // Tan: Leemos primero para asegurar que no pisemos estáticamente un récord ya guardado
-            // A menos que el nuevo rendimiento sea SUPERIOR (Peak Performance Watermark)
-            const snap = await getDoc(docRef);
-            if (snap.exists()) {
-                const oldPerf = snap.data().globalPerf || 0;
-                // Si el rendimiento nuevo es menor o igual al grabado, NO tocamos nada (se queda estático)
-                if (player.globalPerf <= oldPerf) {
-                    continue;
-                }
-            }
-
+            // Tan: Escribimos el récord estadístico de la semana
             await setDoc(docRef, {
                 id: player.id,
                 name: player.name,
