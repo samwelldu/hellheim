@@ -806,7 +806,20 @@ export const mythicPlusService = {
             // Tan: Clave única por semana interna para que SEM 1 y SEM 2 nunca se pisen,
             // incluso si Blizzard repite el periodId entre resets de temporada
             const historyId = `${player.id}-w${weekNum}-${currentPeriodId}`;
-            await setDoc(doc(db, HISTORY_COLLECTION, historyId), {
+            const docRef = doc(db, HISTORY_COLLECTION, historyId);
+            
+            // Tan: Leemos primero para asegurar que no pisemos estáticamente un récord ya guardado
+            // A menos que el nuevo rendimiento sea SUPERIOR (Peak Performance Watermark)
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                const oldPerf = snap.data().globalPerf || 0;
+                // Si el rendimiento nuevo es menor o igual al grabado, NO tocamos nada (se queda estático)
+                if (player.globalPerf <= oldPerf) {
+                    continue;
+                }
+            }
+
+            await setDoc(docRef, {
                 id: player.id,
                 name: player.name,
                 globalPerf: player.globalPerf,
