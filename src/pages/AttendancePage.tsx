@@ -122,7 +122,7 @@ export const AttendancePage: React.FC = () => {
             // Create a list of WCL participants to iterate
             const wclList = wclParticipants.map(p => ({
                 name: (p.name || '').toLowerCase(),
-                realm: (p.realm || '').toLowerCase().replace(/\\s+/g, '-').replace(/'/g, '')
+                realm: (p.realm || '').toLowerCase().replace(/[\\s'-]/g, '')
             }));
 
             let matchedIds: string[] = [];
@@ -130,7 +130,7 @@ export const AttendancePage: React.FC = () => {
 
             roster.forEach(member => {
                 const memberName = member.name.toLowerCase();
-                const memberRealm = member.realm.toLowerCase().replace(/\\s+/g, '-').replace(/'/g, '');
+                const memberRealm = member.realm.toLowerCase().replace(/[\\s'-]/g, '');
                 
                 // Buscar si existe en la lista de WCL
                 const matchPos = wclList.findIndex(wclP => {

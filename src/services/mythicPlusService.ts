@@ -301,24 +301,22 @@ export const mythicPlusService = {
         try {
             const dungeonsData = await blizzardService.getCharacterDungeons(realm, name, region);
             if (dungeonsData && dungeonsData.expansions && dungeonsData.expansions.length > 0) {
-                // Tan: Filtramos para agarrar solo la expansión más reciente (The War Within o superior)
-                // Esto previene que runs antiguas para transfiguración cuenten como M0 válidas para progreso
-                const latestExpansion = dungeonsData.expansions.reduce((prev: any, current: any) => {
-                    return (prev.expansion?.id > current.expansion?.id) ? prev : current;
-                });
+                // Iterar sobre todas las expansiones, ya que en las temporadas actuales
+                // se incluyen mazmorras de expansiones antiguas en la rotación de Míticas 0.
+                for (const exp of dungeonsData.expansions) {
+                    if (exp && exp.instances) {
+                        for (const instance of exp.instances || []) {
+                            for (const mode of instance.modes || []) {
+                                // Asegurar que es dificultad Mítica (M0)
+                                const diffType = mode.difficulty?.type || '';
+                                const isMythic0 = diffType === 'MYTHIC';
 
-                if (latestExpansion && latestExpansion.instances) {
-                    for (const instance of latestExpansion.instances || []) {
-                        for (const mode of instance.modes || []) {
-                            // Tan: Buscamos dificultad "Mythic" por su type para evitar problemas de idioma (Mítico/Mythic)
-                            const diffType = mode.difficulty?.type || '';
-                            const isMythic0 = diffType === 'MYTHIC';
-
-                            if (isMythic0 && mode.progress.encounters) {
-                                // Validar boss por boss si se completó en la semana actual (sobre _resetTime)
-                                const doneThisWeek = mode.progress.encounters.some((boss: any) => boss.last_kill_timestamp > _resetTime);
-                                if (doneThisWeek) {
-                                    count++;
+                                if (isMythic0 && mode.progress.encounters) {
+                                    // Validar si algún jefe de esta mazmorra fue derrotado esta semana
+                                    const doneThisWeek = mode.progress.encounters.some((boss: any) => boss.last_kill_timestamp > _resetTime);
+                                    if (doneThisWeek) {
+                                        count++;
+                                    }
                                 }
                             }
                         }
