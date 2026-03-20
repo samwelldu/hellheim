@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelogData: ChangelogEntry[] = [
     {
+        id: "v1.4.1",
+        version: "v1.4.1",
+        date: new Date().toLocaleDateString(),
+        title: "Actualización: Filtros de Loot, Multi-Cuenta y Correcciones",
+        changes: [
+            "Loot: Nuevo sistema de filtrado múltiple (Búsqueda por Fecha y Motivo de entrega).",
+            "Loot: Hotfix crítico de producción resuelto (Pantalla en blanco por error de inicialización).",
+            "Login: Añadida opción de desvinculación directa de Battle.net para resolver conflictos de multi-cuenta.",
+            "Login: Actualizado proxy OAuth de Blizzard para forzar selección de cuenta.",
+            "Dashboard: Ajuste en la grabación de 'Publicar Sem Actual' permitiendo sobreescrituras manuales exactas."
+        ]
+    },
+    {
         id: "v1.4.0",
         version: "v1.4.0",
         date: new Date().toLocaleDateString(),
